@@ -14,5 +14,5 @@
            colspan="4"
            mode="tree"
            readonly="1"
-           view_ids="health_prescription_audit_v3.view_medication_audit_package_list"/>
+           view_ids="z_001_prescription_audit.view_medication_audit_package_list"/>
 </form>

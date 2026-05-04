@@ -44,7 +44,7 @@ class MedicationPurchasePackage(ModelSQL, ModelView):
         Sequence = pool.get('ir.sequence')
         ModelData = pool.get('ir.model.data')
         seq_id = ModelData.get_id(
-            'health_prescription_audit_v3', 'seq_purchase_package')
+            'z_001_prescription_audit', 'seq_purchase_package')
         sequence = Sequence(seq_id)
         vlist = [dict(v) for v in vlist]
         for vals in vlist:
@@ -155,7 +155,7 @@ class MedicationAudit(ModelSQL, ModelView):
         ModelData = pool.get('ir.model.data')
         try:
             group_id = ModelData.get_id(
-                'health_prescription_audit_v3', 'group_audit_overseer')
+                'z_001_prescription_audit', 'group_audit_overseer')
         except KeyError:
             return False
         current_user = User(Transaction().user)
@@ -294,7 +294,7 @@ class CreatePackageWizard(Wizard):
     start_state = 'start'
     start = StateView(
         'gnuhealth.medication.purchase.package.create.start',
-        'health_prescription_audit_v3.view_create_package_start',
+        'z_001_prescription_audit.view_create_package_start',
         [
             Button('Cancelar', 'end', 'tryton-cancel'),
             Button('Confirmar', 'create_package', 'tryton-ok', default=True),
@@ -344,7 +344,7 @@ class SelectPrescriptionWizard(Wizard):
     start_state = 'start'
     start = StateView(
         'gnuhealth.medication.audit.select.start',
-        'health_prescription_audit_v3.view_select_prescription_start',
+        'z_001_prescription_audit.view_select_prescription_start',
         [
             Button('Cancelar', 'end', 'tryton-cancel'),
             Button('Confirmar', 'create_records', 'tryton-ok', default=True),
@@ -377,7 +377,7 @@ class PrescriptionAuditExport(Wizard):
     start_state = 'result'
     result = StateView(
         'gnuhealth.medication.audit.export.result',
-        'health_prescription_audit_v3.view_audit_export_result',
+        'z_001_prescription_audit.view_audit_export_result',
         [Button('Cerrar', 'end', 'tryton-ok', default=True)])
 
     _STATE_LABELS = {

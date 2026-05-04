@@ -6,7 +6,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='gnuhealth_prescription_audit_v3',
+    name='z_001_prescription_audit',
     version='0.1',
     description='GNU Health Medication Audit Module - Prescription Selection',
     author='Custom Health Team',
@@ -20,7 +20,7 @@ setup(
     ],
     entry_points={
         'trytond.modules': [
-            'health_prescription_audit_v3 = health_prescription_audit_v3',
+            'z_001_prescription_audit = z_001_prescription_audit',
         ],
     },
     classifiers=[
