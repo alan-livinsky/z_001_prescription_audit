@@ -155,7 +155,7 @@ class MedicationAudit(ModelSQL, ModelView):
         ModelData = pool.get('ir.model.data')
         try:
             group_id = ModelData.get_id(
-                'z_001_prescription_audit', 'group_audit_overseer')
+                'z_001_prescription_audit', 'z_supervisosr_auditor_recetas')
         except KeyError:
             return False
         current_user = User(Transaction().user)

@@ -8,12 +8,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <tryton>
     <data noupdate="1">
 
-        <record model="res.group" id="group_prescription_auditor_v3">
+        <record model="res.group" id="z_auditor_recetas">
             <field name="name">Auditor de Recetas</field>
         </record>
 
-        <record model="res.group" id="group_audit_overseer">
-            <field name="name">Supervisor de Auditoría</field>
+        <record model="res.group" id="z_supervisosr_auditor_recetas">
+            <field name="name">Supervisor de Auditoria</field>
+        </record>
+
+        <record model="res.group" id="z_recepcion_recetas">
+            <field name="name">Recepcion de Recetas</field>
         </record>
 
         <!-- ======================================================= -->
@@ -61,7 +65,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <!-- ======================================================= -->
 
         <record model="ir.action.act_window" id="act_medication_audit_v3">
-            <field name="name">Auditoría de Recetas</field>
+            <field name="name">Auditorias Medicas</field>
             <field name="res_model">gnuhealth.medication.audit</field>
         </record>
 
@@ -78,10 +82,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
 
         <!-- ======================================================= -->
-        <!-- MENU                                                      -->
+        <!-- MENU                                                     -->
         <!-- ======================================================= -->
 
-        <menuitem name="Auditoría de Recetas"
+        <menuitem name="Auditorias Medicas"
                   parent="health.gnuhealth_menu"
                   id="menu_prescription_audit_v3"
                   sequence="50"
@@ -89,7 +93,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.ui.menu-res.group" id="menu_prescription_audit_group_access_v3">
             <field name="menu" ref="menu_prescription_audit_v3"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_prescription_audit_group_access_overseer_v3">
+            <field name="menu" ref="menu_prescription_audit_v3"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
         </record>
 
         <!-- ======================================================= -->
@@ -98,34 +107,34 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.model.access" id="access_medication_audit_auditor_v3">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.audit')]"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_delete" eval="False"/>
-        </record>
-
-        <record model="ir.model.access" id="access_select_start_auditor_v3">
-            <field name="model" search="[('model', '=', 'gnuhealth.medication.audit.select.start')]"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
+            <field name="perm_create" eval="False"/>
             <field name="perm_delete" eval="False"/>
         </record>
 
         <record model="ir.model.access" id="access_medication_audit_overseer_v3">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.audit')]"/>
-            <field name="group" ref="group_audit_overseer"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_medication_audit_recepcion_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.medication.audit')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="True"/>
             <field name="perm_delete" eval="False"/>
         </record>
 
-        <record model="ir.model.access" id="access_select_start_overseer_v3">
+        <record model="ir.model.access" id="access_select_start_recepcion_v3">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.audit.select.start')]"/>
-            <field name="group" ref="group_audit_overseer"/>
+            <field name="group" ref="z_recepcion_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -134,7 +143,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.model.access" id="access_export_result_auditor_v3">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.audit.export.result')]"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_export_result_overseer_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.medication.audit.export.result')]"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -182,7 +200,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <!-- MENU: Paquetes de Compra                                -->
         <!-- ======================================================= -->
 
-        <menuitem name="Paquetes de Compra"
+        <menuitem name="Paquetes Auditados"
                   parent="menu_prescription_audit_v3"
                   id="menu_purchase_package"
                   sequence="20"
@@ -190,7 +208,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.ui.menu-res.group" id="menu_purchase_package_group_access">
             <field name="menu" ref="menu_purchase_package"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_purchase_package_group_access_overseer">
+            <field name="menu" ref="menu_purchase_package"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
         </record>
 
         <!-- ======================================================= -->
@@ -199,7 +222,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.model.access" id="access_purchase_package_auditor">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.purchase.package')]"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="True"/>
@@ -208,7 +231,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.model.access" id="access_purchase_package_overseer">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.purchase.package')]"/>
-            <field name="group" ref="group_audit_overseer"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="False"/>
             <field name="perm_create" eval="True"/>
@@ -217,7 +240,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.model.access" id="access_create_package_start_auditor">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.purchase.package.create.start')]"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -226,7 +249,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.model.access" id="access_create_package_start_overseer">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.purchase.package.create.start')]"/>
-            <field name="group" ref="group_audit_overseer"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -275,19 +298,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="model">gnuhealth.medication.audit,-1</field>
         </record>
 
-        <menuitem name="Cargar Receta"
-                  parent="menu_prescription_audit_v3"
+        <menuitem name="Registrar Solicitud de Auditoria"
+                  parent="health.gnuhealth_menu"
                   id="menu_load_prescription_v3"
                   sequence="10"
                   action="act_select_prescription_wizard_v3"/>
 
         <record model="ir.ui.menu-res.group" id="menu_load_prescription_group_access_v3">
             <field name="menu" ref="menu_load_prescription_v3"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_recepcion_recetas"/>
         </record>
 
         <!-- ======================================================= -->
-        <!-- EXPORT WIZARD                                            -->
+        <!-- EXPORT WIZARD                                           -->
         <!-- ======================================================= -->
 
         <record model="ir.ui.view" id="view_audit_export_result">
@@ -297,7 +320,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
 
         <record model="ir.action.wizard" id="act_export_audit_wizard_v3">
-            <field name="name">Exportar Auditoría CSV</field>
+            <field name="name">Exportar Auditoria CSV</field>
             <field name="wiz_name">gnuhealth.medication.audit.export</field>
         </record>
 
@@ -307,7 +330,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="model">gnuhealth.medication.audit,-1</field>
         </record>
 
-        <menuitem name="Exportar Auditoría CSV"
+        <menuitem name="Exportar Auditoria CSV"
                   parent="menu_prescription_audit_v3"
                   id="menu_export_audit_csv_v3"
                   sequence="60"
@@ -315,11 +338,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.ui.menu-res.group" id="menu_export_csv_group_access_v3">
             <field name="menu" ref="menu_export_audit_csv_v3"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_export_csv_group_access_overseer_v3">
+            <field name="menu" ref="menu_export_audit_csv_v3"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
         </record>
 
         <!-- ======================================================= -->
-        <!-- BUTTON RULES                                             -->
+        <!-- BUTTON RULES                                            -->
         <!-- ======================================================= -->
 
         <record model="ir.model.button" id="button_approve_line_v3">
@@ -328,7 +356,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
         <record model="ir.model.button.rule" id="rule_approve_line_v3">
             <field name="button" ref="button_approve_line_v3"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+        <record model="ir.model.button.rule" id="rule_approve_line_overseer_v3">
+            <field name="button" ref="button_approve_line_v3"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
         </record>
 
         <record model="ir.model.button" id="button_reject_line_v3">
@@ -343,11 +375,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
         <record model="ir.model.button.rule" id="rule_reset_line_v3">
             <field name="button" ref="button_reset_line_v3"/>
-            <field name="group" ref="group_audit_overseer"/>
-        </record>
-        <record model="ir.model.button.rule" id="rule_reset_line_auditor_v3">
-            <field name="button" ref="button_reset_line_v3"/>
-            <field name="group" ref="group_prescription_auditor_v3"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
         </record>
 
     </data>
