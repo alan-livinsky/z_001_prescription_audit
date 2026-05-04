@@ -321,6 +321,14 @@ class CreatePackageWizard(Wizard):
             'notes': self.start.notes,
         }])
         MedicationAudit.write(valid, {'package': package.id})
+        try:
+            MedicalPurchaseAudit = pool.get(
+                'gnuhealth.medical.purchase.audit')
+        except KeyError:
+            MedicalPurchaseAudit = None
+        if MedicalPurchaseAudit is not None:
+            MedicalPurchaseAudit.create_from_package(
+                MedicationPurchasePackage(package.id))
         return 'end'
 
     def end(self):
