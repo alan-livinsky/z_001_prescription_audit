@@ -1,21 +1,10 @@
 <?xml version="1.0"?>
-<form create="0" delete="0">
-    <label name="source_prescription"
-           states="{'invisible': Bool(Eval('prescription_line', False))}"
-           depends="['prescription_line']"/>
-    <field name="source_prescription" colspan="3"
-           states="{'invisible': Bool(Eval('prescription_line', False))}"
-           depends="['prescription_line']"/>
+<form>
+    <field name="source_prescription" colspan="4"/>
     <group string="Contexto" colspan="4" col="4" id="group_context">
-        <field name="prescription" string="Receta" colspan="2"
-               states="{'invisible': Not(Bool(Eval('prescription_line', False)))}"
-               depends="['prescription_line']"/>
-        <field name="patient" colspan="2"
-               states="{'invisible': Not(Bool(Eval('prescription_line', False)))}"
-               depends="['prescription_line']"/>
-        <field name="medicament" colspan="2"
-               states="{'invisible': Not(Bool(Eval('prescription_line', False)))}"
-               depends="['prescription_line']"/>
+        <field name="prescription" string="Receta" colspan="2"/>
+        <field name="patient" colspan="2"/>
+        <field name="medicament" colspan="2"/>
     </group>
     <separator id="sep_audit" colspan="4"/>
     <group string="Estado Auditoría" colspan="4" col="2" id="group_audit_status">
@@ -44,6 +33,4 @@
     <field name="audit_notes" string="Notas" colspan="4"/>
     <label name="package"/>
     <field name="package" readonly="1" colspan="3"/>
-    <field name="is_audit_overseer" colspan="4"
-           states="{'invisible': True}"/>
 </form>
