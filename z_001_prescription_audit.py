@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class MedicationPurchasePackage(ModelSQL, ModelView):
-    'Medication Purchase Package'
+    'Paquete de Compra de Medicamentos'
     __name__ = 'gnuhealth.medication.purchase.package'
 
     name = fields.Char('Nombre', readonly=True)
@@ -63,7 +63,7 @@ class MedicationPurchasePackage(ModelSQL, ModelView):
 
 
 class MedicationAudit(ModelSQL, ModelView):
-    'Medication Audit'
+    'Auditoría de Recetas'
     __name__ = 'gnuhealth.medication.audit'
 
     source_prescription = fields.Many2One(
@@ -328,7 +328,7 @@ class CreatePackageWizard(Wizard):
 
 
 class SelectPrescriptionStart(ModelView):
-    'Seleccionar Receta para Auditoría'
+    'Seleccionar Receta'
     __name__ = 'gnuhealth.medication.audit.select.start'
 
     prescription = fields.Many2One(
@@ -338,7 +338,7 @@ class SelectPrescriptionStart(ModelView):
 
 
 class SelectPrescriptionWizard(Wizard):
-    'Cargar Receta en Auditoría'
+    'Cargar Receta'
     __name__ = 'gnuhealth.medication.audit.select'
 
     start_state = 'start'
@@ -363,7 +363,7 @@ class SelectPrescriptionWizard(Wizard):
 
 
 class ExportResult(ModelView):
-    'Resultado de Exportación de Auditoría'
+    'Resultado de Exportación'
     __name__ = 'gnuhealth.medication.audit.export.result'
 
     csv_file = fields.Binary('Archivo CSV', filename='filename')
@@ -371,7 +371,7 @@ class ExportResult(ModelView):
 
 
 class PrescriptionAuditExport(Wizard):
-    'Exportar Auditoría de Medicamentos a CSV'
+    'Exportar Auditoría CSV'
     __name__ = 'gnuhealth.medication.audit.export'
 
     start_state = 'result'

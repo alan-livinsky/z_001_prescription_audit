@@ -9,11 +9,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <data noupdate="1">
 
         <record model="res.group" id="group_prescription_auditor_v3">
-            <field name="name">Prescription Auditor v3</field>
+            <field name="name">Auditor de Recetas</field>
         </record>
 
         <record model="res.group" id="group_audit_overseer">
-            <field name="name">Audit Overseer</field>
+            <field name="name">Supervisor de Auditoría</field>
         </record>
 
         <!-- ======================================================= -->
@@ -61,7 +61,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <!-- ======================================================= -->
 
         <record model="ir.action.act_window" id="act_medication_audit_v3">
-            <field name="name">Auditoría de Medicamentos</field>
+            <field name="name">Auditoría de Recetas</field>
             <field name="res_model">gnuhealth.medication.audit</field>
         </record>
 
@@ -81,7 +81,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <!-- MENU                                                      -->
         <!-- ======================================================= -->
 
-        <menuitem name="Prescription Audit v3"
+        <menuitem name="Auditoría de Recetas"
                   parent="health.gnuhealth_menu"
                   id="menu_prescription_audit_v3"
                   sequence="50"
@@ -265,7 +265,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
 
         <record model="ir.action.wizard" id="act_select_prescription_wizard_v3">
-            <field name="name">Cargar desde Receta</field>
+            <field name="name">Cargar Receta</field>
             <field name="wiz_name">gnuhealth.medication.audit.select</field>
         </record>
 
@@ -275,7 +275,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="model">gnuhealth.medication.audit,-1</field>
         </record>
 
-        <menuitem name="Cargar desde Receta"
+        <menuitem name="Cargar Receta"
                   parent="menu_prescription_audit_v3"
                   id="menu_load_prescription_v3"
                   sequence="10"
@@ -297,7 +297,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
 
         <record model="ir.action.wizard" id="act_export_audit_wizard_v3">
-            <field name="name">Exportar a CSV</field>
+            <field name="name">Exportar Auditoría CSV</field>
             <field name="wiz_name">gnuhealth.medication.audit.export</field>
         </record>
 
@@ -307,7 +307,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="model">gnuhealth.medication.audit,-1</field>
         </record>
 
-        <menuitem name="Exportar a CSV"
+        <menuitem name="Exportar Auditoría CSV"
                   parent="menu_prescription_audit_v3"
                   id="menu_export_audit_csv_v3"
                   sequence="60"
