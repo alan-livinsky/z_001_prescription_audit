@@ -9,15 +9,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <data noupdate="1">
 
         <record model="res.group" id="z_auditor_recetas">
-            <field name="name">Auditor de Recetas</field>
+            <field name="name">z_auditor_recetas</field>
         </record>
 
         <record model="res.group" id="z_supervisosr_auditor_recetas">
-            <field name="name">Supervisor de Auditoria</field>
+            <field name="name">z_supervisosr_auditor_recetas</field>
         </record>
 
         <record model="res.group" id="z_recepcion_recetas">
-            <field name="name">Recepcion de Recetas</field>
+            <field name="name">z_recepcion_recetas</field>
         </record>
 
         <!-- ======================================================= -->
