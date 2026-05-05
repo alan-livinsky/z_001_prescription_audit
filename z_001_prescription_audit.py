@@ -152,7 +152,7 @@ class MedicationAudit(ModelSQL, ModelView):
 
     @classmethod
     def _current_user_is_audit_overseer(cls):
-        return cls._current_user_has_group('z_supervisor_auditoria_recetas')
+        return cls._current_user_has_group('z_supervisosr_auditor_recetas')
 
     @classmethod
     def _current_user_is_auditor(cls):
