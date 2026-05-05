@@ -323,7 +323,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
 
         <record model="ir.action.act_window" id="act_loaded_prescription_audit_v3">
-            <field name="name">Recetas Cargadas</field>
+            <field name="name">Recetas registradas para auditoria</field>
             <field name="res_model">gnuhealth.loaded.prescription.audit</field>
         </record>
 
@@ -345,7 +345,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
                   sequence="10"
                   action="act_select_prescription_wizard_v3"/>
 
-        <menuitem name="Recetas Cargadas"
+        <menuitem name="Recetas registradas para auditoria"
                   parent="health.gnuhealth_menu"
                   id="menu_loaded_prescription_audit_v3"
                   sequence="15"

@@ -354,7 +354,7 @@ class MedicationAudit(ModelSQL, ModelView):
 
 
 class LoadedPrescriptionAudit(ModelSQL, ModelView):
-    'Recetas Cargadas a Auditoria'
+    'Recetas registradas para auditoria'
     __name__ = 'gnuhealth.loaded.prescription.audit'
 
     source_prescription_id = fields.Integer('ID Receta Fuente', readonly=True)
