@@ -183,6 +183,13 @@ class MedicationAudit(ModelSQL, ModelView):
                 'No tiene los permisos necesarios para auditar recetas.')
 
     @classmethod
+    def _ensure_auditor_role(cls):
+        if not cls._current_user_is_auditor():
+            raise UserError(
+                'No tiene los permisos necesarios para aceptar o rechazar '
+                'recetas.')
+
+    @classmethod
     def _ensure_reception_role(cls):
         if not cls._current_user_is_reception():
             raise UserError(
@@ -307,7 +314,7 @@ class MedicationAudit(ModelSQL, ModelView):
     @classmethod
     @ModelView.button
     def approve_line(cls, records):
-        cls._ensure_audit_role()
+        cls._ensure_auditor_role()
         for record in records:
             if record.audit_state != 'pending':
                 raise UserError(
@@ -324,7 +331,7 @@ class MedicationAudit(ModelSQL, ModelView):
     @classmethod
     @ModelView.button
     def reject_line(cls, records):
-        cls._ensure_audit_role()
+        cls._ensure_auditor_role()
         for record in records:
             if record.audit_state != 'pending':
                 raise UserError(
