@@ -157,6 +157,10 @@ class MedicationAudit(ModelSQL, ModelView):
         return cls._current_user_has_group('z_auditor_recetas')
 
     @classmethod
+    def _current_user_is_reception(cls):
+        return cls._current_user_has_group('z_recepcion_recetas')
+
+    @classmethod
     def _current_user_has_group(cls, group_xml_id):
         pool = Pool()
         User = pool.get('res.user')
@@ -175,6 +179,12 @@ class MedicationAudit(ModelSQL, ModelView):
                 or cls._current_user_is_audit_overseer()):
             raise UserError(
                 'No tiene los permisos necesarios para auditar recetas.')
+
+    @classmethod
+    def _ensure_reception_role(cls):
+        if not cls._current_user_is_reception():
+            raise UserError(
+                'No tiene los permisos necesarios para cargar recetas.')
 
     @classmethod
     def get_from_line(cls, records, name):
@@ -214,6 +224,7 @@ class MedicationAudit(ModelSQL, ModelView):
 
     @classmethod
     def create(cls, vlist):
+        cls._ensure_reception_role()
         Prescription = Pool().get('gnuhealth.prescription.order')
         expanded = []
         for vals in vlist:
@@ -228,7 +239,9 @@ class MedicationAudit(ModelSQL, ModelView):
                     if line.id not in existing_ids:
                         expanded.append({'prescription_line': line.id})
             elif vals.get('prescription_line'):
-                expanded.append(vals)
+                raise UserError(
+                    'Las lineas de auditoria solo se pueden cargar a partir '
+                    'de una receta.')
             else:
                 raise UserError(
                     'Seleccione una receta en el campo "Cargar Receta".')
@@ -388,6 +401,7 @@ class SelectPrescriptionWizard(Wizard):
 
     def transition_create_records(self):
         MedicationAudit = Pool().get('gnuhealth.medication.audit')
+        MedicationAudit._ensure_reception_role()
         MedicationAudit.create([{
             'source_prescription': self.start.prescription.id,
         }])
