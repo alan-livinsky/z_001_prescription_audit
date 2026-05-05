@@ -9,8 +9,10 @@ def register():
     Pool.register(
         z_001_prescription_audit.MedicationPurchasePackage,
         z_001_prescription_audit.MedicationAudit,
+        z_001_prescription_audit.LoadedPrescriptionAudit,
         z_001_prescription_audit.CreatePackageStart,
         z_001_prescription_audit.SelectPrescriptionStart,
+        z_001_prescription_audit.LoadPrescriptionResult,
         z_001_prescription_audit.ExportResult,
         module='z_001_prescription_audit', type_='model')
     Pool.register(

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<form>
+    <label name="prescription_code"/>
+    <field name="prescription_code" colspan="3"/>
+    <label name="loaded_count"/>
+    <field name="loaded_count"/>
+    <label name="skipped_count"/>
+    <field name="skipped_count"/>
+    <label name="message"/>
+    <field name="message" colspan="4"/>
+</form>

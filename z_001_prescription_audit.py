@@ -16,9 +16,11 @@ from trytond.wizard import Button, StateTransition, StateView, Wizard
 __all__ = [
     'MedicationPurchasePackage',
     'MedicationAudit',
+    'LoadedPrescriptionAudit',
     'CreatePackageStart',
     'CreatePackageWizard',
     'SelectPrescriptionStart',
+    'LoadPrescriptionResult',
     'SelectPrescriptionWizard',
     'ExportResult',
     'PrescriptionAuditExport',
@@ -223,21 +225,76 @@ class MedicationAudit(ModelSQL, ModelView):
         return 'pending'
 
     @classmethod
-    def create(cls, vlist):
+    def _get_prescription_code(cls, prescription):
+        return (
+            getattr(prescription, 'prescription_id', None)
+            or getattr(prescription, 'rec_name', None)
+            or 'ID %s' % prescription.id)
+
+    @classmethod
+    def _create_prescription_audit_lines(cls, prescription_lines):
+        return super().create([
+            {'prescription_line': line.id}
+            for line in prescription_lines
+        ])
+
+    @classmethod
+    def _build_load_message(cls, prescription, loaded_count, skipped_count):
+        prescription_code = cls._get_prescription_code(prescription)
+        if skipped_count:
+            return (
+                'La receta "%s" ya tenia %s linea(s) cargadas. '
+                'Se agregaron %s linea(s) faltantes.'
+                % (prescription_code, skipped_count, loaded_count))
+        return (
+            'La receta "%s" se cargo correctamente con %s linea(s).'
+            % (prescription_code, loaded_count))
+
+    @classmethod
+    def load_prescription(cls, prescription):
         cls._ensure_reception_role()
+        prescription_code = cls._get_prescription_code(prescription)
+        prescription_lines = list(prescription.prescription_line or [])
+        if not prescription_lines:
+            raise UserError(
+                'La receta "%s" no tiene lineas de medicamentos para cargar.'
+                % prescription_code)
+
+        existing = cls.search([
+            ('prescription_line.name', '=', prescription.id)])
+        existing_ids = {record.prescription_line.id for record in existing}
+        missing_lines = [
+            line for line in prescription_lines
+            if line.id not in existing_ids]
+
+        if not missing_lines:
+            raise UserError(
+                'La receta "%s" ya fue cargada anteriormente en auditoria.'
+                % prescription_code)
+
+        created_records = cls._create_prescription_audit_lines(missing_lines)
+        Pool().get('gnuhealth.loaded.prescription.audit').sync_prescription(
+            prescription)
+        return {
+            'records': created_records,
+            'prescription_code': prescription_code,
+            'loaded_count': len(created_records),
+            'skipped_count': len(existing_ids),
+            'message': cls._build_load_message(
+                prescription, len(created_records), len(existing_ids)),
+        }
+
+    @classmethod
+    def create(cls, vlist):
         Prescription = Pool().get('gnuhealth.prescription.order')
-        expanded = []
+        created_records = []
         for vals in vlist:
             vals = dict(vals)
             source_id = vals.pop('source_prescription', None)
             if source_id:
                 prescription = Prescription(source_id)
-                existing = cls.search([
-                    ('prescription_line.name', '=', prescription.id)])
-                existing_ids = {r.prescription_line.id for r in existing}
-                for line in prescription.prescription_line:
-                    if line.id not in existing_ids:
-                        expanded.append({'prescription_line': line.id})
+                result = cls.load_prescription(prescription)
+                created_records.extend(result['records'])
             elif vals.get('prescription_line'):
                 raise UserError(
                     'Las lineas de auditoria solo se pueden cargar a partir '
@@ -245,9 +302,7 @@ class MedicationAudit(ModelSQL, ModelView):
             else:
                 raise UserError(
                     'Seleccione una receta en el campo "Cargar Receta".')
-        if not expanded:
-            return []
-        return super().create(expanded)
+        return created_records
 
     @classmethod
     @ModelView.button
@@ -296,6 +351,136 @@ class MedicationAudit(ModelSQL, ModelView):
             'audit_user': None,
         })
         logger.info('Medication audit record(s) reset to pending')
+
+
+class LoadedPrescriptionAudit(ModelSQL, ModelView):
+    'Recetas Cargadas a Auditoria'
+    __name__ = 'gnuhealth.loaded.prescription.audit'
+
+    source_prescription_id = fields.Integer('ID Receta Fuente', readonly=True)
+    prescription_code = fields.Char('Codigo de Receta', readonly=True)
+    prescription_issue_date = fields.Date('Fecha Emision', readonly=True)
+    audit_load_date = fields.DateTime(
+        'Fecha Carga a Auditoria', readonly=True)
+    patient = fields.Char('Paciente', readonly=True)
+
+    @classmethod
+    def __setup__(cls):
+        super().__setup__()
+        table = cls.__table__()
+        cls._sql_constraints = [
+            ('source_prescription_unique',
+                Unique(table, table.source_prescription_id),
+                'Cada receta solo puede aparecer una vez en la bandeja.'),
+        ]
+
+    @classmethod
+    def _ensure_sync_context(cls):
+        if not Transaction().context.get('sync_loaded_prescription_audit'):
+            raise UserError(
+                'La bandeja de recetas cargadas se actualiza solo desde el '
+                'flujo de carga de auditoria.')
+
+    @classmethod
+    def create(cls, vlist):
+        cls._ensure_sync_context()
+        return super().create(vlist)
+
+    @classmethod
+    def write(cls, *args):
+        cls._ensure_sync_context()
+        return super().write(*args)
+
+    @classmethod
+    def delete(cls, records):
+        cls._ensure_sync_context()
+        return super().delete(records)
+
+    @classmethod
+    def _build_summary_values(cls, prescription, audit_lines):
+        prescription_date = None
+        if prescription and getattr(prescription, 'prescription_date', None):
+            prescription_date = prescription.prescription_date.date()
+        patient_name = ''
+        if prescription and getattr(prescription, 'patient', None):
+            patient_name = prescription.patient.rec_name or ''
+        load_dates = [
+            line.create_date for line in audit_lines
+            if getattr(line, 'create_date', None)
+        ]
+        return {
+            'source_prescription_id': prescription.id,
+            'prescription_code': MedicationAudit._get_prescription_code(
+                prescription),
+            'prescription_issue_date': prescription_date,
+            'audit_load_date': min(load_dates) if load_dates else None,
+            'patient': patient_name,
+        }
+
+    @classmethod
+    def sync_prescription(cls, prescription):
+        MedicationAudit = Pool().get('gnuhealth.medication.audit')
+        audit_lines = MedicationAudit.search([
+            ('prescription_line.name', '=', prescription.id)])
+        if not audit_lines:
+            return
+
+        values = cls._build_summary_values(prescription, audit_lines)
+        with Transaction().set_context(
+                sync_loaded_prescription_audit=True,
+                skip_loaded_prescription_sync=True):
+            existing = super(LoadedPrescriptionAudit, cls).search([
+                ('source_prescription_id', '=', prescription.id)])
+            if existing:
+                super(LoadedPrescriptionAudit, cls).write(existing, values)
+            else:
+                super(LoadedPrescriptionAudit, cls).create([values])
+
+    @classmethod
+    def sync_all(cls):
+        if Transaction().context.get('skip_loaded_prescription_sync'):
+            return
+
+        MedicationAudit = Pool().get('gnuhealth.medication.audit')
+        grouped = {}
+        for line in MedicationAudit.search([
+                ('prescription_line.name', '!=', None)]):
+            prescription = line.prescription
+            if not prescription:
+                continue
+            grouped.setdefault(prescription.id, {
+                'prescription': prescription,
+                'lines': [],
+            })['lines'].append(line)
+
+        if not grouped:
+            return
+
+        with Transaction().set_context(
+                sync_loaded_prescription_audit=True,
+                skip_loaded_prescription_sync=True):
+            existing_records = super(LoadedPrescriptionAudit, cls).search([])
+            existing_by_source = {
+                record.source_prescription_id: record
+                for record in existing_records
+            }
+            for source_id, data in grouped.items():
+                values = cls._build_summary_values(
+                    data['prescription'], data['lines'])
+                record = existing_by_source.get(source_id)
+                if record:
+                    super(LoadedPrescriptionAudit, cls).write([record], values)
+                else:
+                    super(LoadedPrescriptionAudit, cls).create([values])
+
+    @classmethod
+    def search(cls, domain, offset=0, limit=None, order=None, count=False,
+            query=False):
+        cls.sync_all()
+        with Transaction().set_context(skip_loaded_prescription_sync=True):
+            return super().search(
+                domain, offset=offset, limit=limit, order=order,
+                count=count, query=query)
 
 
 class CreatePackageStart(ModelView):
@@ -385,6 +570,16 @@ class SelectPrescriptionStart(ModelView):
         help='Receta a cargar en auditoría')
 
 
+class LoadPrescriptionResult(ModelView):
+    'Resultado de Carga de Receta'
+    __name__ = 'gnuhealth.medication.audit.load.result'
+
+    prescription_code = fields.Char('Codigo de Receta', readonly=True)
+    loaded_count = fields.Integer('Lineas Cargadas', readonly=True)
+    skipped_count = fields.Integer('Lineas Ya Existentes', readonly=True)
+    message = fields.Text('Resultado', readonly=True)
+
+
 class SelectPrescriptionWizard(Wizard):
     'Cargar Receta'
     __name__ = 'gnuhealth.medication.audit.select'
@@ -398,14 +593,29 @@ class SelectPrescriptionWizard(Wizard):
             Button('Confirmar', 'create_records', 'tryton-ok', default=True),
         ])
     create_records = StateTransition()
+    result = StateView(
+        'gnuhealth.medication.audit.load.result',
+        'z_001_prescription_audit.view_load_prescription_result',
+        [Button('Cerrar', 'end', 'tryton-ok', default=True)])
+
+    def __init__(self):
+        super().__init__()
+        self.load_result_data = {}
 
     def transition_create_records(self):
         MedicationAudit = Pool().get('gnuhealth.medication.audit')
         MedicationAudit._ensure_reception_role()
-        MedicationAudit.create([{
-            'source_prescription': self.start.prescription.id,
-        }])
-        return 'end'
+        result = MedicationAudit.load_prescription(self.start.prescription)
+        self.load_result_data = {
+            'prescription_code': result['prescription_code'],
+            'loaded_count': result['loaded_count'],
+            'skipped_count': result['skipped_count'],
+            'message': result['message'],
+        }
+        return 'result'
+
+    def default_result(self, fields_names):
+        return dict(self.load_result_data)
 
     def end(self):
         return 'reload'
