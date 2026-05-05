@@ -476,7 +476,8 @@ class LoadedPrescriptionAudit(ModelSQL, ModelView):
     @classmethod
     def search(cls, domain, offset=0, limit=None, order=None, count=False,
             query=False):
-        cls.sync_all()
+        # Tryton may execute search RPCs in a read-only transaction, so this
+        # method must not trigger create/write side effects.
         with Transaction().set_context(skip_loaded_prescription_sync=True):
             return super().search(
                 domain, offset=offset, limit=limit, order=order,
