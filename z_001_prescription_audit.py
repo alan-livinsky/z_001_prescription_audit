@@ -598,8 +598,8 @@ class SelectPrescriptionWizard(Wizard):
         'z_001_prescription_audit.view_load_prescription_result',
         [Button('Cerrar', 'end', 'tryton-ok', default=True)])
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, session_id):
+        super().__init__(session_id)
         self.load_result_data = {}
 
     def transition_create_records(self):
