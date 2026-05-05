@@ -150,16 +150,31 @@ class MedicationAudit(ModelSQL, ModelView):
 
     @classmethod
     def _current_user_is_audit_overseer(cls):
+        return cls._current_user_has_group('z_supervisor_auditoria_recetas')
+
+    @classmethod
+    def _current_user_is_auditor(cls):
+        return cls._current_user_has_group('z_auditor_recetas')
+
+    @classmethod
+    def _current_user_has_group(cls, group_xml_id):
         pool = Pool()
         User = pool.get('res.user')
         ModelData = pool.get('ir.model.data')
         try:
-            group_id = ModelData.get_id(
-                'z_001_prescription_audit', 'z_supervisor_auditoria_recetas')
+            group_id = ModelData.get_id('z_001_prescription_audit', group_xml_id)
         except KeyError:
             return False
         current_user = User(Transaction().user)
         return any(g.id == group_id for g in current_user.groups)
+
+    @classmethod
+    def _ensure_audit_role(cls):
+        if not (
+                cls._current_user_is_auditor()
+                or cls._current_user_is_audit_overseer()):
+            raise UserError(
+                'No tiene los permisos necesarios para auditar recetas.')
 
     @classmethod
     def get_from_line(cls, records, name):
@@ -224,6 +239,11 @@ class MedicationAudit(ModelSQL, ModelView):
     @classmethod
     @ModelView.button
     def approve_line(cls, records):
+        cls._ensure_audit_role()
+        for record in records:
+            if record.audit_state != 'pending':
+                raise UserError(
+                    'Solo se pueden aprobar lineas en estado pendiente.')
         current_user = Pool().get('res.user')(Transaction().user)
         cls.write(records, {
             'audit_state': 'aprobada',
@@ -236,6 +256,11 @@ class MedicationAudit(ModelSQL, ModelView):
     @classmethod
     @ModelView.button
     def reject_line(cls, records):
+        cls._ensure_audit_role()
+        for record in records:
+            if record.audit_state != 'pending':
+                raise UserError(
+                    'Solo se pueden rechazar lineas en estado pendiente.')
         current_user = Pool().get('res.user')(Transaction().user)
         cls.write(records, {
             'audit_state': 'rechazada',
@@ -306,6 +331,8 @@ class CreatePackageWizard(Wizard):
         MedicationAudit = pool.get('gnuhealth.medication.audit')
         MedicationPurchasePackage = pool.get(
             'gnuhealth.medication.purchase.package')
+
+        MedicationAudit._ensure_audit_role()
 
         active_ids = Transaction().context.get('active_ids') or []
         records = MedicationAudit.browse(active_ids)
