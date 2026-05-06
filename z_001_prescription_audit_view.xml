@@ -150,6 +150,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="perm_delete" eval="False"/>
         </record>
 
+        <record model="ir.model.access" id="access_prescription_order_auditor_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.prescription.order')]"/>
+            <field name="group" ref="z_auditor_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
         <record model="ir.model.access" id="access_load_result_recepcion_v3">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.audit.load.result')]"/>
             <field name="group" ref="z_recepcion_recetas"/>
@@ -274,15 +283,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="perm_delete" eval="False"/>
         </record>
 
-        <record model="ir.model.access" id="access_create_package_start_overseer">
-            <field name="model" search="[('model', '=', 'gnuhealth.medication.purchase.package.create.start')]"/>
-            <field name="group" ref="z_supervisosr_auditor_recetas"/>
-            <field name="perm_read" eval="True"/>
-            <field name="perm_write" eval="True"/>
-            <field name="perm_create" eval="True"/>
-            <field name="perm_delete" eval="False"/>
-        </record>
-
         <!-- ======================================================= -->
         <!-- CREATE PACKAGE WIZARD                                   -->
         <!-- ======================================================= -->
@@ -294,7 +294,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </record>
 
         <record model="ir.action.wizard" id="act_create_package_wizard">
-            <field name="name">Crear Paquete de Compra</field>
+            <field name="name">Generar solicitud de compra</field>
             <field name="wiz_name">gnuhealth.medication.purchase.package.create</field>
         </record>
 
@@ -340,12 +340,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="sequence" eval="10"/>
             <field name="view" ref="view_loaded_prescription_audit_list"/>
             <field name="act_window" ref="act_loaded_prescription_audit_v3"/>
-        </record>
-
-        <record model="ir.action.keyword" id="keyword_load_prescription_v3">
-            <field name="keyword">form_action</field>
-            <field name="action" ref="act_select_prescription_wizard_v3"/>
-            <field name="model">gnuhealth.medication.audit,-1</field>
         </record>
 
         <menuitem name="Registrar Solicitud de Auditoria"

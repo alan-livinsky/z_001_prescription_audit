@@ -352,6 +352,11 @@ class MedicationAudit(ModelSQL, ModelView):
             raise UserError(
                 'No tiene los permisos necesarios para restablecer la '
                 'auditoría.')
+        for record in records:
+            if record.package:
+                raise UserError(
+                    'No se pueden restablecer lineas que ya estan asociadas '
+                    'a un paquete.')
         cls.write(records, {
             'audit_state': 'pending',
             'audit_date': None,
@@ -492,7 +497,7 @@ class LoadedPrescriptionAudit(ModelSQL, ModelView):
 
 
 class CreatePackageStart(ModelView):
-    'Crear Paquete de Compra'
+    'Generar solicitud de compra'
     __name__ = 'gnuhealth.medication.purchase.package.create.start'
 
     valid_count = fields.Integer('Registros válidos', readonly=True)
@@ -519,7 +524,7 @@ class CreatePackageStart(ModelView):
 
 
 class CreatePackageWizard(Wizard):
-    'Crear Paquete de Compra'
+    'Generar solicitud de compra'
     __name__ = 'gnuhealth.medication.purchase.package.create'
 
     start_state = 'start'
@@ -538,7 +543,7 @@ class CreatePackageWizard(Wizard):
         MedicationPurchasePackage = pool.get(
             'gnuhealth.medication.purchase.package')
 
-        MedicationAudit._ensure_audit_role()
+        MedicationAudit._ensure_auditor_role()
 
         active_ids = Transaction().context.get('active_ids') or []
         records = MedicationAudit.browse(active_ids)
