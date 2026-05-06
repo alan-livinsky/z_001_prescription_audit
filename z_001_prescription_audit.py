@@ -196,6 +196,16 @@ class MedicationAudit(ModelSQL, ModelView):
                 'No tiene los permisos necesarios para cargar recetas.')
 
     @classmethod
+    def _ensure_creation_role(cls):
+        if (
+                cls._current_user_is_auditor()
+                or cls._current_user_is_audit_overseer()):
+            raise UserError(
+                'Los perfiles de auditor y supervisor no pueden crear '
+                'registros de auditoria.')
+        cls._ensure_reception_role()
+
+    @classmethod
     def get_from_line(cls, records, name):
         result = {}
         for record in records:
@@ -293,6 +303,7 @@ class MedicationAudit(ModelSQL, ModelView):
 
     @classmethod
     def create(cls, vlist):
+        cls._ensure_creation_role()
         Prescription = Pool().get('gnuhealth.prescription.order')
         created_records = []
         for vals in vlist:
