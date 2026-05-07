@@ -213,6 +213,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="perm_delete" eval="False"/>
         </record>
 
+        <record model="ir.model.access" id="access_create_test_users_start">
+            <field name="model" search="[('model', '=', 'gnuhealth.test.users.create.start')]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_create_test_users_result">
+            <field name="model" search="[('model', '=', 'gnuhealth.test.users.create.result')]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
         <!-- ======================================================= -->
         <!-- VIEWS: MedicationPurchasePackage                        -->
         <!-- ======================================================= -->
@@ -391,6 +407,29 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="type">form</field>
             <field name="name">medication_audit_export</field>
         </record>
+
+        <record model="ir.ui.view" id="view_create_test_users_start">
+            <field name="model">gnuhealth.test.users.create.start</field>
+            <field name="type">form</field>
+            <field name="name">create_test_users_start</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_create_test_users_result">
+            <field name="model">gnuhealth.test.users.create.result</field>
+            <field name="type">form</field>
+            <field name="name">create_test_users_result</field>
+        </record>
+
+        <record model="ir.action.wizard" id="act_create_test_users_wizard">
+            <field name="name">Crear usuarios de prueba</field>
+            <field name="wiz_name">gnuhealth.test.users.create</field>
+        </record>
+
+        <menuitem name="Crear usuarios de prueba"
+                  parent="ir.menu_administration"
+                  id="menu_create_test_users"
+                  sequence="250"
+                  action="act_create_test_users_wizard"/>
 
         <record model="ir.action.wizard" id="act_export_audit_wizard_v3">
             <field name="name">Exportar Auditoria CSV</field>

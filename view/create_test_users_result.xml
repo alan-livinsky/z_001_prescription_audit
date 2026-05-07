@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<form col="4">
+    <label name="summary"/>
+    <field name="summary" colspan="4"/>
+</form>

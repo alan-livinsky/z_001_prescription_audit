@@ -653,6 +653,27 @@ class LoadPrescriptionResult(ModelView):
     message = fields.Text('Resultado', readonly=True)
 
 
+class CreateTestUsersStart(ModelView):
+    'Crear usuarios de prueba'
+    __name__ = 'gnuhealth.test.users.create.start'
+
+    notes = fields.Text('Observaciones', readonly=True)
+
+    @staticmethod
+    def default_notes():
+        return (
+            'Este asistente crea o actualiza un usuario de prueba por cada '
+            'grupo personalizado de auditoria y compras. Si el usuario ya '
+            'existe, se conserva y se asegura su asociacion con el grupo.')
+
+
+class CreateTestUsersResult(ModelView):
+    'Resultado de creacion de usuarios de prueba'
+    __name__ = 'gnuhealth.test.users.create.result'
+
+    summary = fields.Text('Resultado', readonly=True)
+
+
 class SelectPrescriptionWizard(Wizard):
     'Cargar Receta'
     __name__ = 'gnuhealth.medication.audit.select'
@@ -692,6 +713,146 @@ class SelectPrescriptionWizard(Wizard):
 
     def end(self):
         return 'reload'
+
+
+class CreateTestUsersWizard(Wizard):
+    'Crear usuarios de prueba'
+    __name__ = 'gnuhealth.test.users.create'
+
+    TEST_USER_SPECS = (
+        {
+            'module': 'z_001_prescription_audit',
+            'group_xml_id': 'z_recepcion_recetas',
+            'login': 'test_recepcion_recetas',
+            'name': 'Usuario Prueba Recepcion Recetas',
+            'password': 'test1234',
+        },
+        {
+            'module': 'z_001_prescription_audit',
+            'group_xml_id': 'z_auditor_recetas',
+            'login': 'test_auditor_recetas',
+            'name': 'Usuario Prueba Auditor Recetas',
+            'password': 'test1234',
+        },
+        {
+            'module': 'z_001_prescription_audit',
+            'group_xml_id': 'z_supervisosr_auditor_recetas',
+            'login': 'test_supervisor_recetas',
+            'name': 'Usuario Prueba Supervisor Recetas',
+            'password': 'test1234',
+        },
+        {
+            'module': 'z_001_medical_purchases_audit',
+            'group_xml_id': 'z_gestor_compras_medicamentos',
+            'login': 'test_gestor_compras',
+            'name': 'Usuario Prueba Gestor Compras',
+            'password': 'test1234',
+        },
+        {
+            'module': 'z_001_medical_purchases_audit',
+            'group_xml_id': 'z_auditor_medico_compras_medicamentos',
+            'login': 'test_auditor_medico_compras',
+            'name': 'Usuario Prueba Auditor Medico Compras',
+            'password': 'test1234',
+        },
+    )
+
+    start_state = 'start'
+    start = StateView(
+        'gnuhealth.test.users.create.start',
+        'z_001_prescription_audit.view_create_test_users_start',
+        [
+            Button('Cancelar', 'end', 'tryton-cancel'),
+            Button('Crear', 'create_users', 'tryton-ok', default=True),
+        ])
+    create_users = StateTransition()
+    result = StateView(
+        'gnuhealth.test.users.create.result',
+        'z_001_prescription_audit.view_create_test_users_result',
+        [Button('Cerrar', 'end', 'tryton-ok', default=True)])
+
+    def __init__(self, session_id):
+        super().__init__(session_id)
+        self.result_data = {}
+
+    @classmethod
+    def _get_group_id(cls, module_name, group_xml_id):
+        ModelData = Pool().get('ir.model.data')
+        try:
+            return ModelData.get_id(module_name, group_xml_id)
+        except KeyError:
+            return None
+
+    @classmethod
+    def _ensure_group_membership(cls, user, group_id):
+        user_group_ids = {group.id for group in (user.groups or [])}
+        if group_id in user_group_ids:
+            return False
+        Pool().get('res.user').write([user], {
+            'groups': [('add', [group_id])],
+        })
+        return True
+
+    @classmethod
+    def _create_or_update_test_user(cls, spec):
+        User = Pool().get('res.user')
+        group_id = cls._get_group_id(spec['module'], spec['group_xml_id'])
+        if not group_id:
+            return {
+                'login': spec['login'],
+                'password': spec['password'],
+                'status': 'omitido por modulo no instalado',
+            }
+        users = User.search([
+            ('login', '=', spec['login']),
+        ], limit=1)
+        if users:
+            membership_added = cls._ensure_group_membership(users[0], group_id)
+            return {
+                'login': spec['login'],
+                'password': spec['password'],
+                'status': (
+                    'existente y actualizado'
+                    if membership_added else 'existente'),
+            }
+
+        User.create([{
+            'name': spec['name'],
+            'login': spec['login'],
+            'password': spec['password'],
+            'active': True,
+            'groups': [('add', [group_id])],
+        }])
+        return {
+            'login': spec['login'],
+            'password': spec['password'],
+            'status': 'creado',
+        }
+
+    @classmethod
+    def _build_summary(cls, results):
+        lines = [
+            'Usuarios de prueba procesados:',
+            '',
+        ]
+        for result in results:
+            lines.append(
+                '- %s / %s (%s)'
+                % (result['login'], result['password'], result['status']))
+        return '\n'.join(lines)
+
+    def transition_create_users(self):
+        results = [
+            self._create_or_update_test_user(spec)
+            for spec in self.TEST_USER_SPECS
+        ]
+        self.result_data = {
+            'summary': self._build_summary(results),
+        }
+        return 'result'
+
+    def default_result(self, fields_names):
+        return dict(self.result_data)
 
 
 class ExportResult(ModelView):

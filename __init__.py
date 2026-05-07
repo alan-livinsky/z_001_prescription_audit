@@ -13,10 +13,13 @@ def register():
         z_001_prescription_audit.CreatePackageStart,
         z_001_prescription_audit.SelectPrescriptionStart,
         z_001_prescription_audit.LoadPrescriptionResult,
+        z_001_prescription_audit.CreateTestUsersStart,
+        z_001_prescription_audit.CreateTestUsersResult,
         z_001_prescription_audit.ExportResult,
         module='z_001_prescription_audit', type_='model')
     Pool.register(
         z_001_prescription_audit.CreatePackageWizard,
         z_001_prescription_audit.SelectPrescriptionWizard,
+        z_001_prescription_audit.CreateTestUsersWizard,
         z_001_prescription_audit.PrescriptionAuditExport,
         module='z_001_prescription_audit', type_='wizard')
