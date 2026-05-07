@@ -3,6 +3,7 @@
 
 import csv
 import io
+import calendar
 from datetime import datetime, date
 import logging
 
@@ -268,37 +269,85 @@ class MedicationAudit(ModelSQL, ModelView):
             % (prescription_code, loaded_count))
 
     @classmethod
+    def _has_loaded_prescription(cls, prescription):
+        LoadedPrescriptionAudit = Pool().get(
+            'gnuhealth.loaded.prescription.audit')
+
+        loaded = LoadedPrescriptionAudit.search([
+            ('source_prescription_id', '=', prescription.id),
+        ], limit=1)
+        if loaded:
+            return True
+
+        existing = cls.search([
+            ('prescription_line.name', '=', prescription.id),
+        ], limit=1)
+        return bool(existing)
+
+    @staticmethod
+    def _get_prescription_issue_date(prescription):
+        issue_date = getattr(prescription, 'prescription_date', None)
+        if not issue_date:
+            return None
+        if hasattr(issue_date, 'date'):
+            return issue_date.date()
+        return issue_date
+
+    @staticmethod
+    def _add_one_calendar_month(issue_date):
+        year = issue_date.year
+        month = issue_date.month + 1
+        if month > 12:
+            month = 1
+            year += 1
+        day = min(issue_date.day, calendar.monthrange(year, month)[1])
+        return date(year, month, day)
+
+    @classmethod
+    def _validate_prescription_validity(cls, prescription):
+        prescription_code = cls._get_prescription_code(prescription)
+        issue_date = cls._get_prescription_issue_date(prescription)
+        if not issue_date:
+            raise UserError(
+                'La receta "%s" no tiene fecha de emision y no puede '
+                'cargarse en auditoria.'
+                % prescription_code)
+
+        valid_until = cls._add_one_calendar_month(issue_date)
+        if date.today() > valid_until:
+            raise UserError(
+                'La receta "%s" esta vencida para auditoria. '
+                'Su vigencia era hasta el %s.'
+                % (prescription_code, valid_until.strftime('%d/%m/%Y')))
+
+    @classmethod
     def load_prescription(cls, prescription):
         cls._ensure_reception_role()
         prescription_code = cls._get_prescription_code(prescription)
+        if cls._has_loaded_prescription(prescription):
+            raise UserError(
+                'La receta "%s" ya fue cargada anteriormente en auditoria.'
+                % prescription_code)
+
+        cls._validate_prescription_validity(prescription)
+
         prescription_lines = list(prescription.prescription_line or [])
         if not prescription_lines:
             raise UserError(
                 'La receta "%s" no tiene lineas de medicamentos para cargar.'
                 % prescription_code)
 
-        existing = cls.search([
-            ('prescription_line.name', '=', prescription.id)])
-        existing_ids = {record.prescription_line.id for record in existing}
-        missing_lines = [
-            line for line in prescription_lines
-            if line.id not in existing_ids]
-
-        if not missing_lines:
-            raise UserError(
-                'La receta "%s" ya fue cargada anteriormente en auditoria.'
-                % prescription_code)
-
-        created_records = cls._create_prescription_audit_lines(missing_lines)
+        created_records = cls._create_prescription_audit_lines(
+            prescription_lines)
         Pool().get('gnuhealth.loaded.prescription.audit').sync_prescription(
             prescription)
         return {
             'records': created_records,
             'prescription_code': prescription_code,
             'loaded_count': len(created_records),
-            'skipped_count': len(existing_ids),
+            'skipped_count': 0,
             'message': cls._build_load_message(
-                prescription, len(created_records), len(existing_ids)),
+                prescription, len(created_records), 0),
         }
 
     @classmethod
