@@ -112,6 +112,9 @@ class MedicationAudit(ModelSQL, ModelView):
     audit_date = fields.DateTime('Fecha Auditoría',
         states={'readonly': True},
         help='Fecha en que se auditó este medicamento')
+    audit_date_display = fields.Function(
+        fields.Char('Fecha y Hora Auditoria'),
+        'get_audit_date_display')
 
     audit_user = fields.Many2One('res.user', 'Auditor',
         states={'readonly': True},
@@ -237,6 +240,17 @@ class MedicationAudit(ModelSQL, ModelView):
     @classmethod
     def get_is_packaged(cls, records, name):
         return {r.id: bool(r.package) for r in records}
+
+    @classmethod
+    def get_audit_date_display(cls, records, name):
+        result = {}
+        for record in records:
+            if record.audit_date:
+                result[record.id] = record.audit_date.strftime(
+                    '%Y-%m-%d %H:%M:%S')
+            else:
+                result[record.id] = ''
+        return result
 
     @staticmethod
     def default_audit_state():

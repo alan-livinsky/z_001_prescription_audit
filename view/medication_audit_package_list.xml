@@ -5,6 +5,6 @@
     <field name="patient"/>
     <field name="medicament"/>
     <field name="audit_state" string="Estado AuditorÃ­a"/>
-    <field name="audit_date" string="Fecha y Hora Auditoria"/>
+    <field name="audit_date_display" string="Fecha y Hora Auditoria"/>
     <field name="package" string="Paquete" tree_invisible="1"/>
 </tree>
