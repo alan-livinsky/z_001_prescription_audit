@@ -11,7 +11,7 @@
         <label name="audit_state"/>
         <field name="audit_state" string="Estado"/>
         <label name="audit_date"/>
-        <field name="audit_date" string="Fecha Auditoria"/>
+        <field name="audit_date" string="Fecha y Hora Auditoria"/>
         <label name="audit_user"/>
         <field name="audit_user" string="Auditor"/>
     </group>

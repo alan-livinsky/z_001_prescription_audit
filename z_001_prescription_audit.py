@@ -372,6 +372,23 @@ class MedicationAudit(ModelSQL, ModelView):
         return created_records
 
     @classmethod
+    def write(cls, *args):
+        actions = iter(args)
+        new_args = []
+        for records, values in zip(actions, actions):
+            values = dict(values)
+            if 'audit_state' in values:
+                target_state = values['audit_state']
+                if (
+                        'audit_date' not in values
+                        and any(
+                            record.audit_state != target_state
+                            for record in records)):
+                    values['audit_date'] = datetime.utcnow()
+            new_args.extend([records, values])
+        return super().write(*new_args)
+
+    @classmethod
     @ModelView.button
     def approve_line(cls, records):
         cls._ensure_auditor_role()
@@ -419,7 +436,6 @@ class MedicationAudit(ModelSQL, ModelView):
                     'a un paquete.')
         cls.write(records, {
             'audit_state': 'pending',
-            'audit_date': None,
             'audit_user': None,
         })
         logger.info('Medication audit record(s) reset to pending')
@@ -914,7 +930,8 @@ class PrescriptionAuditExport(Wizard):
                 medicament_name = ''
             try:
                 audit_date = (
-                    str(record.audit_date.date()) if record.audit_date else '')
+                    record.audit_date.strftime('%Y-%m-%d %H:%M:%S')
+                    if record.audit_date else '')
             except Exception:
                 audit_date = ''
             try:
