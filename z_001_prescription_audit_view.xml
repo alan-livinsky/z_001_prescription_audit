@@ -376,17 +376,27 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="act_window" ref="act_loaded_prescription_audit_v3"/>
         </record>
 
-        <menuitem name="Registrar Solicitud de Auditoria"
+        <menuitem name="Solicitudes auditoria receta"
                   parent="health.gnuhealth_menu"
+                  id="menu_prescription_audit_requests_v3"
+                  sequence="10"/>
+
+        <menuitem name="Registrar Solicitud de Auditoria"
+                  parent="menu_prescription_audit_requests_v3"
                   id="menu_load_prescription_v3"
                   sequence="10"
                   action="act_select_prescription_wizard_v3"/>
 
         <menuitem name="Recetas registradas para auditoria"
-                  parent="health.gnuhealth_menu"
+                  parent="menu_prescription_audit_requests_v3"
                   id="menu_loaded_prescription_audit_v3"
                   sequence="15"
                   action="act_loaded_prescription_audit_v3"/>
+
+        <record model="ir.ui.menu-res.group" id="menu_prescription_audit_requests_group_access_v3">
+            <field name="menu" ref="menu_prescription_audit_requests_v3"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+        </record>
 
         <record model="ir.ui.menu-res.group" id="menu_load_prescription_group_access_v3">
             <field name="menu" ref="menu_load_prescription_v3"/>
