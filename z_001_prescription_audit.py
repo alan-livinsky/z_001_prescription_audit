@@ -593,6 +593,32 @@ class CreatePackageStart(ModelView):
     valid_count = fields.Integer('Registros válidos', readonly=True)
     skipped_count = fields.Integer('Registros omitidos', readonly=True)
     notes = fields.Text('Observaciones')
+    help_text = fields.Text('Que hara este asistente', readonly=True)
+    selection_source = fields.Selection([
+        ('manual', 'Usar seleccion actual'),
+        ('audit_date_range', 'Buscar por rango de fecha de auditoria'),
+    ], 'Como seleccionar lineas',
+        required=True,
+        help='Defina si desea usar la seleccion actual o buscar lineas '
+        'aprobadas por fecha de auditoria.')
+    audit_date_from = fields.Date(
+        'Fecha de auditoria desde',
+        states={
+            'invisible': Eval('selection_source') != 'audit_date_range',
+            'required': Eval('selection_source') == 'audit_date_range',
+        },
+        depends=['selection_source'])
+    audit_date_to = fields.Date(
+        'Fecha de auditoria hasta',
+        states={
+            'invisible': Eval('selection_source') != 'audit_date_range',
+            'required': Eval('selection_source') == 'audit_date_range',
+        },
+        depends=['selection_source'])
+    eligible_count = fields.Integer('Lineas a incluir', readonly=True)
+    excluded_count = fields.Integer('Lineas excluidas', readonly=True)
+    selection_summary = fields.Text('Resumen de seleccion', readonly=True)
+    exclusion_summary = fields.Text('Motivos de exclusion', readonly=True)
 
     @classmethod
     def default_valid_count(cls):
@@ -612,6 +638,213 @@ class CreatePackageStart(ModelView):
             1 for r in records
             if r.audit_state != 'aprobada' or r.package)
 
+    @staticmethod
+    def default_help_text():
+        return (
+            'Este asistente genera un paquete de compra con lineas '
+            'aprobadas de auditoria que todavia no fueron incluidas en '
+            'otro paquete.')
+
+    @classmethod
+    def _get_manual_records(cls):
+        MedicationAudit = Pool().get('gnuhealth.medication.audit')
+        active_ids = Transaction().context.get('active_ids') or []
+        if not active_ids:
+            return []
+        return list(MedicationAudit.browse(active_ids))
+
+    @classmethod
+    def _get_initial_range_dates(cls):
+        records = cls._get_manual_records()
+        dated = [
+            record.audit_date.date()
+            for record in records
+            if getattr(record, 'audit_date', None)
+        ]
+        if dated:
+            return min(dated), max(dated)
+        today = date.today()
+        return today, today
+
+    @classmethod
+    def _get_range_records(cls, date_from, date_to):
+        MedicationAudit = Pool().get('gnuhealth.medication.audit')
+        if not date_from or not date_to or date_from > date_to:
+            return []
+        return list(MedicationAudit.search([]))
+
+    @classmethod
+    def _summarize_records(cls, records, selection_source, date_from=None,
+            date_to=None):
+        reasons = {
+            'not_approved': 0,
+            'already_packaged': 0,
+            'missing_audit_date': 0,
+            'out_of_range': 0,
+        }
+        eligible = []
+
+        for record in records:
+            if record.audit_state != 'aprobada':
+                reasons['not_approved'] += 1
+                continue
+            if record.package:
+                reasons['already_packaged'] += 1
+                continue
+            if selection_source == 'audit_date_range':
+                if not record.audit_date:
+                    reasons['missing_audit_date'] += 1
+                    continue
+                audit_day = record.audit_date.date()
+                if audit_day < date_from or audit_day > date_to:
+                    reasons['out_of_range'] += 1
+                    continue
+            eligible.append(record)
+
+        if selection_source == 'manual':
+            if records:
+                selection_summary = (
+                    'Se evaluaran %s linea(s) de la seleccion actual. '
+                    'Solo se incluiran las aprobadas y sin paquete.'
+                    % len(records))
+            else:
+                selection_summary = (
+                    'No hay lineas seleccionadas. Puede volver con una '
+                    'seleccion previa o cambiar a rango por fecha.')
+        elif date_from and date_to:
+            selection_summary = (
+                'Se evaluaran las lineas con fecha de auditoria entre %s y '
+                '%s. Solo se incluiran las aprobadas y sin paquete.'
+                % (
+                    date_from.strftime('%d/%m/%Y'),
+                    date_to.strftime('%d/%m/%Y'),
+                ))
+        else:
+            selection_summary = (
+                'Indique un rango de fechas de auditoria para buscar lineas '
+                'aprobadas sin paquete.')
+
+        exclusion_parts = []
+        if reasons['not_approved']:
+            exclusion_parts.append(
+                '%s sin aprobar' % reasons['not_approved'])
+        if reasons['already_packaged']:
+            exclusion_parts.append(
+                '%s ya incluidas en otro paquete'
+                % reasons['already_packaged'])
+        if reasons['missing_audit_date']:
+            exclusion_parts.append(
+                '%s sin fecha de auditoria'
+                % reasons['missing_audit_date'])
+        if reasons['out_of_range']:
+            exclusion_parts.append(
+                '%s fuera del rango' % reasons['out_of_range'])
+
+        if exclusion_parts:
+            exclusion_summary = 'Se excluyen: %s.' % ', '.join(exclusion_parts)
+        else:
+            exclusion_summary = (
+                'No hay exclusiones con el criterio seleccionado.')
+
+        return {
+            'eligible': eligible,
+            'eligible_count': len(eligible),
+            'excluded_count': len(records) - len(eligible),
+            'selection_summary': selection_summary,
+            'exclusion_summary': exclusion_summary,
+        }
+
+    @classmethod
+    def _build_preview(cls, selection_source, date_from=None, date_to=None):
+        if selection_source == 'manual':
+            records = cls._get_manual_records()
+        else:
+            records = cls._get_range_records(date_from, date_to)
+        return cls._summarize_records(
+            records, selection_source, date_from=date_from, date_to=date_to)
+
+    @classmethod
+    def default_selection_source(cls):
+        if Transaction().context.get('active_ids'):
+            return 'manual'
+        return 'audit_date_range'
+
+    @classmethod
+    def default_audit_date_from(cls):
+        return cls._get_initial_range_dates()[0]
+
+    @classmethod
+    def default_audit_date_to(cls):
+        return cls._get_initial_range_dates()[1]
+
+    @classmethod
+    def default_eligible_count(cls):
+        preview = cls._build_preview(
+            cls.default_selection_source(),
+            cls.default_audit_date_from(),
+            cls.default_audit_date_to())
+        return preview['eligible_count']
+
+    @classmethod
+    def default_excluded_count(cls):
+        preview = cls._build_preview(
+            cls.default_selection_source(),
+            cls.default_audit_date_from(),
+            cls.default_audit_date_to())
+        return preview['excluded_count']
+
+    @classmethod
+    def default_selection_summary(cls):
+        preview = cls._build_preview(
+            cls.default_selection_source(),
+            cls.default_audit_date_from(),
+            cls.default_audit_date_to())
+        return preview['selection_summary']
+
+    @classmethod
+    def default_exclusion_summary(cls):
+        preview = cls._build_preview(
+            cls.default_selection_source(),
+            cls.default_audit_date_from(),
+            cls.default_audit_date_to())
+        return preview['exclusion_summary']
+
+    @fields.depends(
+        'selection_source', 'audit_date_from', 'audit_date_to',
+        'eligible_count', 'excluded_count',
+        'selection_summary', 'exclusion_summary')
+    def on_change_selection_source(self):
+        self._update_preview()
+
+    @fields.depends(
+        'selection_source', 'audit_date_from', 'audit_date_to',
+        'eligible_count', 'excluded_count',
+        'selection_summary', 'exclusion_summary')
+    def on_change_audit_date_from(self):
+        self._update_preview()
+
+    @fields.depends(
+        'selection_source', 'audit_date_from', 'audit_date_to',
+        'eligible_count', 'excluded_count',
+        'selection_summary', 'exclusion_summary')
+    def on_change_audit_date_to(self):
+        self._update_preview()
+
+    def _update_preview(self):
+        if self.selection_source == 'audit_date_range':
+            if not self.audit_date_from:
+                self.audit_date_from = self.__class__.default_audit_date_from()
+            if not self.audit_date_to:
+                self.audit_date_to = self.__class__.default_audit_date_to()
+        preview = self.__class__._build_preview(
+            self.selection_source or self.__class__.default_selection_source(),
+            self.audit_date_from,
+            self.audit_date_to)
+        self.eligible_count = preview['eligible_count']
+        self.excluded_count = preview['excluded_count']
+        self.selection_summary = preview['selection_summary']
+        self.exclusion_summary = preview['exclusion_summary']
+
 
 class CreatePackageWizard(Wizard):
     'Generar solicitud de compra'
@@ -627,6 +860,21 @@ class CreatePackageWizard(Wizard):
         ])
     create_package = StateTransition()
 
+    @classmethod
+    def _get_target_summary(cls, start):
+        StartModel = Pool().get(
+            'gnuhealth.medication.purchase.package.create.start')
+        if start.selection_source == 'manual':
+            records = StartModel._get_manual_records()
+        else:
+            records = StartModel._get_range_records(
+                start.audit_date_from, start.audit_date_to)
+        return StartModel._summarize_records(
+            records,
+            start.selection_source,
+            date_from=start.audit_date_from,
+            date_to=start.audit_date_to)
+
     def transition_create_package(self):
         pool = Pool()
         MedicationAudit = pool.get('gnuhealth.medication.audit')
@@ -634,14 +882,25 @@ class CreatePackageWizard(Wizard):
             'gnuhealth.medication.purchase.package')
 
         MedicationAudit._ensure_auditor_role()
+        if self.start.selection_source == 'audit_date_range':
+            if not self.start.audit_date_from or not self.start.audit_date_to:
+                raise UserError(
+                    'Debe indicar ambas fechas para buscar por auditoria.')
+            if self.start.audit_date_from > self.start.audit_date_to:
+                raise UserError(
+                    'La fecha desde no puede ser mayor que la fecha hasta.')
 
-        active_ids = Transaction().context.get('active_ids') or []
-        records = MedicationAudit.browse(active_ids)
-        valid = [
-            r for r in records
-            if r.audit_state == 'aprobada' and not r.package]
+        summary = self.__class__._get_target_summary(self.start)
+        valid = summary['eligible']
 
         if not valid:
+            if self.start.selection_source == 'manual':
+                raise UserError(
+                    'La seleccion actual no tiene lineas aprobadas y sin '
+                    'paquete para generar la solicitud de compra.')
+            raise UserError(
+                'No se encontraron lineas aprobadas y sin paquete dentro '
+                'del rango de fecha de auditoria indicado.')
             raise UserError(
                 'No hay medicamentos aprobados sin paquete en la selección.')
 

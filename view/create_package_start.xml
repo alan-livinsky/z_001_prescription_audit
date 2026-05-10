@@ -1,9 +1,24 @@
 <?xml version="1.0"?>
-<form>
-    <label name="valid_count"/>
-    <field name="valid_count"/>
-    <label name="skipped_count"/>
-    <field name="skipped_count"/>
-    <label name="notes"/>
+<form col="4">
+    <label name="help_text" colspan="4"/>
+    <field name="help_text" colspan="4"/>
+    <separator string="Criterio de seleccion" colspan="4"/>
+    <label name="selection_source"/>
+    <field name="selection_source" colspan="3"/>
+    <label name="audit_date_from"/>
+    <field name="audit_date_from"/>
+    <label name="audit_date_to"/>
+    <field name="audit_date_to"/>
+    <separator string="Resumen" colspan="4"/>
+    <label name="eligible_count"/>
+    <field name="eligible_count"/>
+    <label name="excluded_count"/>
+    <field name="excluded_count"/>
+    <label name="selection_summary" colspan="4"/>
+    <field name="selection_summary" colspan="4"/>
+    <label name="exclusion_summary" colspan="4"/>
+    <field name="exclusion_summary" colspan="4"/>
+    <separator string="Observaciones del paquete" colspan="4"/>
+    <label name="notes" colspan="4"/>
     <field name="notes" colspan="4"/>
 </form>
