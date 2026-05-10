@@ -2,9 +2,7 @@
 <form col="4">
     <label name="help_text" colspan="4"/>
     <field name="help_text" colspan="4"/>
-    <separator string="Criterio de seleccion" colspan="4"/>
-    <label name="selection_source"/>
-    <field name="selection_source" colspan="3"/>
+    <separator string="Rango de fechas de auditoria" colspan="4"/>
     <label name="audit_date_from"/>
     <field name="audit_date_from"/>
     <label name="audit_date_to"/>

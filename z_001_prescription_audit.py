@@ -41,6 +41,12 @@ class MedicationPurchasePackage(ModelSQL, ModelView):
         'gnuhealth.medication.audit', 'package', 'Líneas de Auditoría',
         readonly=True)
 
+    @staticmethod
+    def _format_package_name(sequence_name, package_date):
+        return '%s-%s' % (
+            sequence_name,
+            package_date.strftime('%Y%m%d'))
+
     @classmethod
     def create(cls, vlist):
         pool = Pool()
@@ -51,8 +57,10 @@ class MedicationPurchasePackage(ModelSQL, ModelView):
         sequence = Sequence(seq_id)
         vlist = [dict(v) for v in vlist]
         for vals in vlist:
-            vals['name'] = sequence.get()
-            vals['date'] = date.today()
+            package_date = vals.get('date') or date.today()
+            vals['date'] = package_date
+            vals['name'] = cls._format_package_name(
+                sequence.get(), package_date)
             vals['created_by'] = Transaction().user
         return super().create(vlist)
 
@@ -590,79 +598,24 @@ class CreatePackageStart(ModelView):
     'Generar solicitud de compra'
     __name__ = 'gnuhealth.medication.purchase.package.create.start'
 
-    valid_count = fields.Integer('Registros válidos', readonly=True)
-    skipped_count = fields.Integer('Registros omitidos', readonly=True)
-    notes = fields.Text('Observaciones')
     help_text = fields.Text('Que hara este asistente', readonly=True)
-    selection_source = fields.Selection([
-        ('manual', 'Usar seleccion actual'),
-        ('audit_date_range', 'Buscar por rango de fecha de auditoria'),
-    ], 'Como seleccionar lineas',
-        required=True,
-        help='Defina si desea usar la seleccion actual o buscar lineas '
-        'aprobadas por fecha de auditoria.')
-    audit_date_from = fields.Date(
-        'Fecha de auditoria desde',
-        states={
-            'invisible': Eval('selection_source') != 'audit_date_range',
-            'required': Eval('selection_source') == 'audit_date_range',
-        },
-        depends=['selection_source'])
-    audit_date_to = fields.Date(
-        'Fecha de auditoria hasta',
-        states={
-            'invisible': Eval('selection_source') != 'audit_date_range',
-            'required': Eval('selection_source') == 'audit_date_range',
-        },
-        depends=['selection_source'])
+    audit_date_from = fields.Date('Fecha de auditoria desde', required=True)
+    audit_date_to = fields.Date('Fecha de auditoria hasta', required=True)
     eligible_count = fields.Integer('Lineas a incluir', readonly=True)
     excluded_count = fields.Integer('Lineas excluidas', readonly=True)
     selection_summary = fields.Text('Resumen de seleccion', readonly=True)
     exclusion_summary = fields.Text('Motivos de exclusion', readonly=True)
-
-    @classmethod
-    def default_valid_count(cls):
-        MedicationAudit = Pool().get('gnuhealth.medication.audit')
-        active_ids = Transaction().context.get('active_ids') or []
-        records = MedicationAudit.browse(active_ids)
-        return sum(
-            1 for r in records
-            if r.audit_state == 'aprobada' and not r.package)
-
-    @classmethod
-    def default_skipped_count(cls):
-        MedicationAudit = Pool().get('gnuhealth.medication.audit')
-        active_ids = Transaction().context.get('active_ids') or []
-        records = MedicationAudit.browse(active_ids)
-        return sum(
-            1 for r in records
-            if r.audit_state != 'aprobada' or r.package)
+    notes = fields.Text('Observaciones')
 
     @staticmethod
     def default_help_text():
         return (
             'Este asistente genera un paquete de compra con lineas '
-            'aprobadas de auditoria que todavia no fueron incluidas en '
-            'otro paquete.')
-
-    @classmethod
-    def _get_manual_records(cls):
-        MedicationAudit = Pool().get('gnuhealth.medication.audit')
-        active_ids = Transaction().context.get('active_ids') or []
-        if not active_ids:
-            return []
-        return list(MedicationAudit.browse(active_ids))
+            'aprobadas de auditoria dentro del rango indicado y que '
+            'todavia no fueron incluidas en otro paquete.')
 
     @classmethod
     def _get_initial_range_dates(cls):
-        records = cls._get_manual_records()
-        dated = [
-            record.audit_date.date()
-            for record in records
-            if getattr(record, 'audit_date', None)
-        ]
-        if dated:
-            return min(dated), max(dated)
         today = date.today()
         return today, today
 
@@ -674,8 +627,7 @@ class CreatePackageStart(ModelView):
         return list(MedicationAudit.search([]))
 
     @classmethod
-    def _summarize_records(cls, records, selection_source, date_from=None,
-            date_to=None):
+    def _summarize_records(cls, records, date_from=None, date_to=None):
         reasons = {
             'not_approved': 0,
             'already_packaged': 0,
@@ -691,27 +643,16 @@ class CreatePackageStart(ModelView):
             if record.package:
                 reasons['already_packaged'] += 1
                 continue
-            if selection_source == 'audit_date_range':
-                if not record.audit_date:
-                    reasons['missing_audit_date'] += 1
-                    continue
-                audit_day = record.audit_date.date()
-                if audit_day < date_from or audit_day > date_to:
-                    reasons['out_of_range'] += 1
-                    continue
+            if not record.audit_date:
+                reasons['missing_audit_date'] += 1
+                continue
+            audit_day = record.audit_date.date()
+            if audit_day < date_from or audit_day > date_to:
+                reasons['out_of_range'] += 1
+                continue
             eligible.append(record)
 
-        if selection_source == 'manual':
-            if records:
-                selection_summary = (
-                    'Se evaluaran %s linea(s) de la seleccion actual. '
-                    'Solo se incluiran las aprobadas y sin paquete.'
-                    % len(records))
-            else:
-                selection_summary = (
-                    'No hay lineas seleccionadas. Puede volver con una '
-                    'seleccion previa o cambiar a rango por fecha.')
-        elif date_from and date_to:
+        if date_from and date_to:
             selection_summary = (
                 'Se evaluaran las lineas con fecha de auditoria entre %s y '
                 '%s. Solo se incluiran las aprobadas y sin paquete.'
@@ -755,19 +696,10 @@ class CreatePackageStart(ModelView):
         }
 
     @classmethod
-    def _build_preview(cls, selection_source, date_from=None, date_to=None):
-        if selection_source == 'manual':
-            records = cls._get_manual_records()
-        else:
-            records = cls._get_range_records(date_from, date_to)
+    def _build_preview(cls, date_from=None, date_to=None):
+        records = cls._get_range_records(date_from, date_to)
         return cls._summarize_records(
-            records, selection_source, date_from=date_from, date_to=date_to)
-
-    @classmethod
-    def default_selection_source(cls):
-        if Transaction().context.get('active_ids'):
-            return 'manual'
-        return 'audit_date_range'
+            records, date_from=date_from, date_to=date_to)
 
     @classmethod
     def default_audit_date_from(cls):
@@ -780,7 +712,6 @@ class CreatePackageStart(ModelView):
     @classmethod
     def default_eligible_count(cls):
         preview = cls._build_preview(
-            cls.default_selection_source(),
             cls.default_audit_date_from(),
             cls.default_audit_date_to())
         return preview['eligible_count']
@@ -788,7 +719,6 @@ class CreatePackageStart(ModelView):
     @classmethod
     def default_excluded_count(cls):
         preview = cls._build_preview(
-            cls.default_selection_source(),
             cls.default_audit_date_from(),
             cls.default_audit_date_to())
         return preview['excluded_count']
@@ -796,7 +726,6 @@ class CreatePackageStart(ModelView):
     @classmethod
     def default_selection_summary(cls):
         preview = cls._build_preview(
-            cls.default_selection_source(),
             cls.default_audit_date_from(),
             cls.default_audit_date_to())
         return preview['selection_summary']
@@ -804,40 +733,30 @@ class CreatePackageStart(ModelView):
     @classmethod
     def default_exclusion_summary(cls):
         preview = cls._build_preview(
-            cls.default_selection_source(),
             cls.default_audit_date_from(),
             cls.default_audit_date_to())
         return preview['exclusion_summary']
 
     @fields.depends(
-        'selection_source', 'audit_date_from', 'audit_date_to',
-        'eligible_count', 'excluded_count',
-        'selection_summary', 'exclusion_summary')
-    def on_change_selection_source(self):
-        self._update_preview()
-
-    @fields.depends(
-        'selection_source', 'audit_date_from', 'audit_date_to',
+        'audit_date_from', 'audit_date_to',
         'eligible_count', 'excluded_count',
         'selection_summary', 'exclusion_summary')
     def on_change_audit_date_from(self):
         self._update_preview()
 
     @fields.depends(
-        'selection_source', 'audit_date_from', 'audit_date_to',
+        'audit_date_from', 'audit_date_to',
         'eligible_count', 'excluded_count',
         'selection_summary', 'exclusion_summary')
     def on_change_audit_date_to(self):
         self._update_preview()
 
     def _update_preview(self):
-        if self.selection_source == 'audit_date_range':
-            if not self.audit_date_from:
-                self.audit_date_from = self.__class__.default_audit_date_from()
-            if not self.audit_date_to:
-                self.audit_date_to = self.__class__.default_audit_date_to()
+        if not self.audit_date_from:
+            self.audit_date_from = self.__class__.default_audit_date_from()
+        if not self.audit_date_to:
+            self.audit_date_to = self.__class__.default_audit_date_to()
         preview = self.__class__._build_preview(
-            self.selection_source or self.__class__.default_selection_source(),
             self.audit_date_from,
             self.audit_date_to)
         self.eligible_count = preview['eligible_count']
@@ -864,14 +783,10 @@ class CreatePackageWizard(Wizard):
     def _get_target_summary(cls, start):
         StartModel = Pool().get(
             'gnuhealth.medication.purchase.package.create.start')
-        if start.selection_source == 'manual':
-            records = StartModel._get_manual_records()
-        else:
-            records = StartModel._get_range_records(
-                start.audit_date_from, start.audit_date_to)
+        records = StartModel._get_range_records(
+            start.audit_date_from, start.audit_date_to)
         return StartModel._summarize_records(
             records,
-            start.selection_source,
             date_from=start.audit_date_from,
             date_to=start.audit_date_to)
 
@@ -882,27 +797,20 @@ class CreatePackageWizard(Wizard):
             'gnuhealth.medication.purchase.package')
 
         MedicationAudit._ensure_auditor_role()
-        if self.start.selection_source == 'audit_date_range':
-            if not self.start.audit_date_from or not self.start.audit_date_to:
-                raise UserError(
-                    'Debe indicar ambas fechas para buscar por auditoria.')
-            if self.start.audit_date_from > self.start.audit_date_to:
-                raise UserError(
-                    'La fecha desde no puede ser mayor que la fecha hasta.')
+        if not self.start.audit_date_from or not self.start.audit_date_to:
+            raise UserError(
+                'Debe indicar ambas fechas para buscar por auditoria.')
+        if self.start.audit_date_from > self.start.audit_date_to:
+            raise UserError(
+                'La fecha desde no puede ser mayor que la fecha hasta.')
 
         summary = self.__class__._get_target_summary(self.start)
         valid = summary['eligible']
 
         if not valid:
-            if self.start.selection_source == 'manual':
-                raise UserError(
-                    'La seleccion actual no tiene lineas aprobadas y sin '
-                    'paquete para generar la solicitud de compra.')
             raise UserError(
                 'No se encontraron lineas aprobadas y sin paquete dentro '
                 'del rango de fecha de auditoria indicado.')
-            raise UserError(
-                'No hay medicamentos aprobados sin paquete en la selección.')
 
         package, = MedicationPurchasePackage.create([{
             'notes': self.start.notes,

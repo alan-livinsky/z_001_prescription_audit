@@ -332,10 +332,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="wiz_name">gnuhealth.medication.purchase.package.create</field>
         </record>
 
-        <record model="ir.action.keyword" id="keyword_create_package">
-            <field name="keyword">form_action</field>
+        <record model="ir.action-res.group" id="act_create_package_wizard_group_auditor">
             <field name="action" ref="act_create_package_wizard"/>
-            <field name="model">gnuhealth.medication.audit,-1</field>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+
+        <menuitem name="Generar solicitud de compra"
+                  parent="menu_prescription_audit_v3"
+                  id="menu_create_package_wizard"
+                  sequence="15"
+                  action="act_create_package_wizard"/>
+
+        <record model="ir.ui.menu-res.group" id="menu_create_package_group_access">
+            <field name="menu" ref="menu_create_package_wizard"/>
+            <field name="group" ref="z_auditor_recetas"/>
         </record>
 
         <!-- ======================================================= -->
