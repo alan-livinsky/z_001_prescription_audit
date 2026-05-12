@@ -472,6 +472,9 @@ class LoadedPrescriptionAudit(ModelSQL, ModelView):
     prescription_issue_date = fields.Date('Fecha Emision', readonly=True)
     audit_load_date = fields.DateTime(
         'Fecha Carga a Auditoria', readonly=True)
+    audit_load_date_display = fields.Function(
+        fields.Char('Fecha Carga a Auditoria'),
+        'get_audit_load_date_display')
     patient = fields.Char('Paciente', readonly=True)
 
     @classmethod
@@ -505,6 +508,17 @@ class LoadedPrescriptionAudit(ModelSQL, ModelView):
     def delete(cls, records):
         cls._ensure_sync_context()
         return super().delete(records)
+
+    @classmethod
+    def get_audit_load_date_display(cls, records, name):
+        result = {}
+        for record in records:
+            if record.audit_load_date:
+                result[record.id] = record.audit_load_date.strftime(
+                    '%Y-%m-%d %H:%M:%S')
+            else:
+                result[record.id] = ''
+        return result
 
     @classmethod
     def _build_summary_values(cls, prescription, audit_lines):
