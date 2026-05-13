@@ -127,6 +127,9 @@ class MedicationAudit(ModelSQL, ModelView):
         'Fecha Solicitud Externa',
         readonly=True,
         help='Fecha en que se registro la solicitud externa')
+    external_request_date_display = fields.Function(
+        fields.Char('Fecha Solicitud Externa'),
+        'get_external_request_date_display')
 
     external_reason = fields.Selection(
         EXTERNAL_REQUEST_REASON_SELECTION,
@@ -325,6 +328,17 @@ class MedicationAudit(ModelSQL, ModelView):
         for record in records:
             if record.audit_date:
                 result[record.id] = record.audit_date.strftime(
+                    '%Y-%m-%d %H:%M:%S')
+            else:
+                result[record.id] = ''
+        return result
+
+    @classmethod
+    def get_external_request_date_display(cls, records, name):
+        result = {}
+        for record in records:
+            if record.external_request_date:
+                result[record.id] = record.external_request_date.strftime(
                     '%Y-%m-%d %H:%M:%S')
             else:
                 result[record.id] = ''
@@ -742,6 +756,9 @@ class ExternalMedicationAuditRequest(ModelSQL, ModelView):
         'gnuhealth.patient', 'Paciente', required=True, readonly=True)
     request_date = fields.DateTime(
         'Fecha Solicitud', required=True, readonly=True)
+    request_date_display = fields.Function(
+        fields.Char('Fecha Solicitud'),
+        'get_request_date_display')
     created_by = fields.Many2One(
         'res.user', 'Creado por', required=True, readonly=True)
     reason = fields.Selection(
@@ -772,6 +789,17 @@ class ExternalMedicationAuditRequest(ModelSQL, ModelView):
     def delete(cls, records):
         raise UserError(
             'Las solicitudes de medicamentos externos no se pueden eliminar.')
+
+    @classmethod
+    def get_request_date_display(cls, records, name):
+        result = {}
+        for record in records:
+            if record.request_date:
+                result[record.id] = record.request_date.strftime(
+                    '%Y-%m-%d %H:%M:%S')
+            else:
+                result[record.id] = ''
+        return result
 
 
 class ExternalMedicationAuditRequestLine(ModelSQL, ModelView):
