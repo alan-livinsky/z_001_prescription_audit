@@ -364,7 +364,7 @@ class MedicationAudit(ModelSQL, ModelView):
         duplicates = cls.search([
             ('external_patient', '=', request.patient.id),
             ('external_medicament', '=', line.medicament.id),
-            ('external_request_date', '>=', datetime.utcnow() - timedelta(days=30)),
+            ('external_request_date', '>=', request.request_date - timedelta(days=30)),
         ], limit=1)
         if duplicates:
             raise UserError(
