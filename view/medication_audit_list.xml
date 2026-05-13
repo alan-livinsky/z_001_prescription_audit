@@ -7,7 +7,7 @@
     <field name="external_quantity"/>
     <field name="external_reason_display"/>
     <field name="external_request_date_display"/>
-    <field name="external_request"/>
+    <field name="external_request" string="Registro EXT"/>
     <field name="audit_state" string="Estado Auditoria"/>
     <field name="audit_date_display" string="Fecha y Hora Auditoria"/>
     <field name="package" string="Paquete"/>

@@ -35,6 +35,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="padding" eval="4"/>
         </record>
 
+        <record model="ir.sequence.type" id="seq_type_external_medication_audit_request">
+            <field name="name">External Medication Audit Request</field>
+        </record>
+
+        <record model="ir.sequence" id="seq_external_medication_audit_request">
+            <field name="name">External Medication Audit Request</field>
+            <field name="sequence_type" ref="seq_type_external_medication_audit_request"/>
+            <field name="prefix">EXT-</field>
+            <field name="padding" eval="4"/>
+        </record>
+
     </data>
     <data>
 

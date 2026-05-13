@@ -752,6 +752,7 @@ class ExternalMedicationAuditRequest(ModelSQL, ModelView):
     'Solicitud de medicamentos externos para auditoria'
     __name__ = 'gnuhealth.external.medication.audit.request'
 
+    code = fields.Char('Codigo', readonly=True)
     patient = fields.Many2One(
         'gnuhealth.patient', 'Paciente', required=True, readonly=True)
     request_date = fields.DateTime(
@@ -773,11 +774,36 @@ class ExternalMedicationAuditRequest(ModelSQL, ModelView):
         'Lineas de auditoria', readonly=True)
 
     @classmethod
+    def __setup__(cls):
+        super().__setup__()
+        table = cls.__table__()
+        cls._sql_constraints = [
+            ('external_request_code_unique',
+                Unique(table, table.code),
+                'Cada solicitud externa debe tener un codigo unico.'),
+        ]
+
+    @staticmethod
+    def _format_external_request_code(sequence_name, request_date):
+        return '%s-%s' % (
+            sequence_name,
+            request_date.strftime('%Y'))
+
+    @classmethod
     def create(cls, vlist):
+        pool = Pool()
+        Sequence = pool.get('ir.sequence')
+        ModelData = pool.get('ir.model.data')
+        seq_id = ModelData.get_id(
+            'z_001_prescription_audit', 'seq_external_medication_audit_request')
+        sequence = Sequence(seq_id)
         vlist = [dict(values) for values in vlist]
         for values in vlist:
-            values.setdefault('request_date', datetime.utcnow())
+            request_date = values.get('request_date') or datetime.utcnow()
+            values['request_date'] = request_date
             values.setdefault('created_by', Transaction().user)
+            values['code'] = cls._format_external_request_code(
+                sequence.get(), request_date)
         return super().create(vlist)
 
     @classmethod
@@ -800,6 +826,9 @@ class ExternalMedicationAuditRequest(ModelSQL, ModelView):
             else:
                 result[record.id] = ''
         return result
+
+    def get_rec_name(self, name):
+        return self.code or 'EXT-%s' % self.id
 
 
 class ExternalMedicationAuditRequestLine(ModelSQL, ModelView):
