@@ -138,6 +138,9 @@ class MedicationAudit(ModelSQL, ModelView):
     prescription = fields.Function(
         fields.Many2One('gnuhealth.prescription.order', 'Receta'),
         'get_from_line')
+    reference_display = fields.Function(
+        fields.Char('Referencia'),
+        'get_reference_display')
 
     prescription_issue_date = fields.Function(
         fields.Date('Fecha Emision Prescripcion'),
@@ -312,6 +315,22 @@ class MedicationAudit(ModelSQL, ModelView):
             record.id: labels.get(record.external_reason, '')
             for record in records
         }
+
+    @classmethod
+    def get_reference_display(cls, records, name):
+        result = {}
+        for record in records:
+            if record.prescription:
+                result[record.id] = cls._get_prescription_code(
+                    record.prescription)
+            elif record.external_request:
+                result[record.id] = (
+                    record.external_request.rec_name
+                    or record.external_request.code
+                    or '')
+            else:
+                result[record.id] = ''
+        return result
 
     @classmethod
     def get_is_audit_overseer(cls, records, name):
