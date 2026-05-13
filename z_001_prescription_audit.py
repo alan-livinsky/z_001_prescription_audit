@@ -253,7 +253,7 @@ class MedicationAudit(ModelSQL, ModelView):
     def _ensure_reception_role(cls):
         if not cls._current_user_is_reception():
             raise UserError(
-                'No tiene los permisos necesarios para cargar recetas.')
+                'No tiene los permisos necesarios para registrar solicitudes.')
 
     @classmethod
     def _ensure_creation_role(cls):
@@ -380,7 +380,15 @@ class MedicationAudit(ModelSQL, ModelView):
             raise UserError(
                 'Debe ingresar al menos una linea de medicamentos externos.')
 
+        seen_medicament_ids = set()
         for line in request_lines:
+            if line.medicament and line.medicament.id in seen_medicament_ids:
+                raise UserError(
+                    'No puede repetir el medicamento "%s" dentro de la '
+                    'misma solicitud externa.'
+                    % line.medicament.rec_name)
+            if line.medicament:
+                seen_medicament_ids.add(line.medicament.id)
             cls._validate_external_request_line(request, line)
 
         return super().create([{
