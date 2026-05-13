@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<form>
+    <group col="4" colspan="4" id="group_external_request_result">
+        <label name="request_id"/>
+        <field name="request_id" readonly="1"/>
+        <label name="request_date"/>
+        <field name="request_date" readonly="1"/>
+        <label name="patient"/>
+        <field name="patient" readonly="1"/>
+        <label name="reason"/>
+        <field name="reason" readonly="1"/>
+        <label name="generated_count"/>
+        <field name="generated_count" readonly="1"/>
+    </group>
+    <label name="message"/>
+    <field name="message" colspan="4" readonly="1"/>
+</form>

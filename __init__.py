@@ -10,9 +10,14 @@ def register():
         z_001_prescription_audit.MedicationPurchasePackage,
         z_001_prescription_audit.MedicationAudit,
         z_001_prescription_audit.LoadedPrescriptionAudit,
+        z_001_prescription_audit.ExternalMedicationAuditRequest,
+        z_001_prescription_audit.ExternalMedicationAuditRequestLine,
         z_001_prescription_audit.CreatePackageStart,
         z_001_prescription_audit.SelectPrescriptionStart,
         z_001_prescription_audit.LoadPrescriptionResult,
+        z_001_prescription_audit.ExternalMedicationAuditRequestStart,
+        z_001_prescription_audit.ExternalMedicationAuditRequestStartLine,
+        z_001_prescription_audit.ExternalMedicationAuditRequestResult,
         z_001_prescription_audit.CreateTestUsersStart,
         z_001_prescription_audit.CreateTestUsersResult,
         z_001_prescription_audit.ExportResult,
@@ -20,6 +25,7 @@ def register():
     Pool.register(
         z_001_prescription_audit.CreatePackageWizard,
         z_001_prescription_audit.SelectPrescriptionWizard,
+        z_001_prescription_audit.ExternalMedicationAuditRequestWizard,
         z_001_prescription_audit.CreateTestUsersWizard,
         z_001_prescription_audit.PrescriptionAuditExport,
         module='z_001_prescription_audit', type_='wizard')

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<form>
+    <group col="4" colspan="4" id="group_external_request_header">
+        <label name="request_date"/>
+        <field name="request_date" readonly="1"/>
+        <label name="created_by"/>
+        <field name="created_by" readonly="1"/>
+        <label name="patient"/>
+        <field name="patient" readonly="1"/>
+        <label name="reason"/>
+        <field name="reason" readonly="1"/>
+    </group>
+    <label name="observations"/>
+    <field name="observations" readonly="1" colspan="4"/>
+    <field name="lines"
+           colspan="4"
+           mode="tree,form"
+           readonly="1"
+           view_ids="z_001_prescription_audit.view_external_medication_audit_request_line_tree,z_001_prescription_audit.view_external_medication_audit_request_line_form"/>
+    <field name="audit_lines"
+           colspan="4"
+           mode="tree"
+           readonly="1"
+           view_ids="z_001_prescription_audit.view_medication_audit_package_list"/>
+</form>

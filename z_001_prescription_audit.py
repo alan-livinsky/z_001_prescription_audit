@@ -4,7 +4,7 @@
 import csv
 import io
 import calendar
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import logging
 
 from trytond.exceptions import UserError
@@ -18,15 +18,29 @@ __all__ = [
     'MedicationPurchasePackage',
     'MedicationAudit',
     'LoadedPrescriptionAudit',
+    'ExternalMedicationAuditRequest',
+    'ExternalMedicationAuditRequestLine',
     'CreatePackageStart',
     'CreatePackageWizard',
     'SelectPrescriptionStart',
     'LoadPrescriptionResult',
     'SelectPrescriptionWizard',
+    'ExternalMedicationAuditRequestStart',
+    'ExternalMedicationAuditRequestStartLine',
+    'ExternalMedicationAuditRequestResult',
+    'ExternalMedicationAuditRequestWizard',
     'ExportResult',
     'PrescriptionAuditExport',
 ]
 logger = logging.getLogger(__name__)
+
+
+EXTERNAL_REQUEST_REASON_SELECTION = [
+    ('oncologico', 'Oncologico'),
+    ('hiv', 'HIV'),
+    ('cud', 'CUD'),
+    ('internacion_domiciliaria', 'Internacion domiciliaria'),
+]
 
 
 class MedicationPurchasePackage(ModelSQL, ModelView):
@@ -88,6 +102,36 @@ class MedicationAudit(ModelSQL, ModelView):
         readonly=True,
         help='La línea de receta (medicamento) que se está auditando')
 
+    external_request = fields.Many2One(
+        'gnuhealth.external.medication.audit.request',
+        'Solicitud externa',
+        readonly=True,
+        help='Solicitud consolidada desde la cual se genero esta linea')
+
+    external_patient = fields.Many2One(
+        'gnuhealth.patient', 'Paciente Externo',
+        readonly=True,
+        help='Paciente asociado a la solicitud externa')
+
+    external_medicament = fields.Many2One(
+        'gnuhealth.medicament', 'Medicamento Externo',
+        readonly=True,
+        help='Medicamento solicitado sin receta')
+
+    external_quantity = fields.Integer(
+        'Cantidad Externa',
+        readonly=True,
+        help='Cantidad solicitada para el medicamento externo')
+
+    external_request_date = fields.DateTime(
+        'Fecha Solicitud Externa',
+        readonly=True,
+        help='Fecha en que se registro la solicitud externa')
+
+    external_reason = fields.Selection(
+        EXTERNAL_REQUEST_REASON_SELECTION,
+        'Motivo Externo', sort=False, readonly=True)
+
     prescription = fields.Function(
         fields.Many2One('gnuhealth.prescription.order', 'Receta'),
         'get_from_line')
@@ -103,6 +147,10 @@ class MedicationAudit(ModelSQL, ModelView):
     medicament = fields.Function(
         fields.Many2One('gnuhealth.medicament', 'Medicamento'),
         'get_from_line')
+
+    external_reason_display = fields.Function(
+        fields.Char('Motivo Externo'),
+        'get_external_reason_display')
 
     audit_state = fields.Selection([
         ('pending', 'Pendiente'),
@@ -222,23 +270,45 @@ class MedicationAudit(ModelSQL, ModelView):
         result = {}
         for record in records:
             line = record.prescription_line
-            if not line:
-                result[record.id] = None
+            if line:
+                if name == 'prescription':
+                    result[record.id] = line.name.id if line.name else None
+                elif name == 'prescription_issue_date':
+                    result[record.id] = (
+                        line.name.prescription_date.date()
+                        if line.name and line.name.prescription_date else None)
+                elif name == 'patient':
+                    result[record.id] = (
+                        line.name.patient.id
+                        if line.name and line.name.patient else None)
+                elif name == 'medicament':
+                    result[record.id] = (
+                        line.medicament.id if line.medicament else None)
                 continue
+
             if name == 'prescription':
-                result[record.id] = line.name.id if line.name else None
+                result[record.id] = None
             elif name == 'prescription_issue_date':
                 result[record.id] = (
-                    line.name.prescription_date.date()
-                    if line.name and line.name.prescription_date else None)
+                    record.external_request_date.date()
+                    if record.external_request_date else None)
             elif name == 'patient':
                 result[record.id] = (
-                    line.name.patient.id
-                    if line.name and line.name.patient else None)
+                    record.external_patient.id
+                    if record.external_patient else None)
             elif name == 'medicament':
                 result[record.id] = (
-                    line.medicament.id if line.medicament else None)
+                    record.external_medicament.id
+                    if record.external_medicament else None)
         return result
+
+    @classmethod
+    def get_external_reason_display(cls, records, name):
+        labels = dict(EXTERNAL_REQUEST_REASON_SELECTION)
+        return {
+            record.id: labels.get(record.external_reason, '')
+            for record in records
+        }
 
     @classmethod
     def get_is_audit_overseer(cls, records, name):
@@ -277,6 +347,50 @@ class MedicationAudit(ModelSQL, ModelView):
             {'prescription_line': line.id}
             for line in prescription_lines
         ])
+
+    @classmethod
+    def _validate_external_request_line(cls, request, line):
+        if not getattr(line, 'medicament', None):
+            raise UserError(
+                'Debe seleccionar un medicamento en todas las lineas.')
+        if not getattr(line, 'quantity', None) or line.quantity <= 0:
+            medicament_name = (
+                line.medicament.rec_name
+                if getattr(line, 'medicament', None) else 'sin medicamento')
+            raise UserError(
+                'La cantidad para "%s" debe ser mayor que cero.'
+                % medicament_name)
+
+        duplicates = cls.search([
+            ('external_patient', '=', request.patient.id),
+            ('external_medicament', '=', line.medicament.id),
+            ('external_request_date', '>=', datetime.utcnow() - timedelta(days=30)),
+        ], limit=1)
+        if duplicates:
+            raise UserError(
+                'El paciente "%s" ya tiene una solicitud externa del '
+                'medicamento "%s" dentro de los ultimos 30 dias.'
+                % (request.patient.rec_name, line.medicament.rec_name))
+
+    @classmethod
+    def create_external_request_lines(cls, request):
+        cls._ensure_reception_role()
+        request_lines = list(request.lines or [])
+        if not request_lines:
+            raise UserError(
+                'Debe ingresar al menos una linea de medicamentos externos.')
+
+        for line in request_lines:
+            cls._validate_external_request_line(request, line)
+
+        return super().create([{
+            'external_request': request.id,
+            'external_patient': request.patient.id,
+            'external_medicament': line.medicament.id,
+            'external_quantity': line.quantity,
+            'external_request_date': request.request_date,
+            'external_reason': request.reason,
+        } for line in request_lines])
 
     @classmethod
     def _build_load_message(cls, prescription, loaded_count, skipped_count):
@@ -388,6 +502,10 @@ class MedicationAudit(ModelSQL, ModelView):
                 raise UserError(
                     'Las lineas de auditoria solo se pueden cargar a partir '
                     'de una receta.')
+            elif vals.get('external_request'):
+                raise UserError(
+                    'Las lineas de auditoria externas solo se pueden crear '
+                    'desde el asistente de solicitud de medicamentos externos.')
             else:
                 raise UserError(
                     'Seleccione una receta en el campo "Cargar Receta".')
@@ -472,6 +590,9 @@ class LoadedPrescriptionAudit(ModelSQL, ModelView):
     prescription_issue_date = fields.Date('Fecha Emision', readonly=True)
     audit_load_date = fields.DateTime(
         'Fecha Carga a Auditoria', readonly=True)
+    audit_load_date_display = fields.Function(
+        fields.Char('Fecha Carga a Auditoria'),
+        'get_audit_load_date_display')
     patient = fields.Char('Paciente', readonly=True)
 
     @classmethod
@@ -505,6 +626,17 @@ class LoadedPrescriptionAudit(ModelSQL, ModelView):
     def delete(cls, records):
         cls._ensure_sync_context()
         return super().delete(records)
+
+    @classmethod
+    def get_audit_load_date_display(cls, records, name):
+        result = {}
+        for record in records:
+            if record.audit_load_date:
+                result[record.id] = record.audit_load_date.strftime(
+                    '%Y-%m-%d %H:%M:%S')
+            else:
+                result[record.id] = ''
+        return result
 
     @classmethod
     def _build_summary_values(cls, prescription, audit_lines):
@@ -592,6 +724,99 @@ class LoadedPrescriptionAudit(ModelSQL, ModelView):
             return super().search(
                 domain, offset=offset, limit=limit, order=order,
                 count=count, query=query)
+
+
+class ExternalMedicationAuditRequest(ModelSQL, ModelView):
+    'Solicitud de medicamentos externos para auditoria'
+    __name__ = 'gnuhealth.external.medication.audit.request'
+
+    patient = fields.Many2One(
+        'gnuhealth.patient', 'Paciente', required=True, readonly=True)
+    request_date = fields.DateTime(
+        'Fecha Solicitud', required=True, readonly=True)
+    created_by = fields.Many2One(
+        'res.user', 'Creado por', required=True, readonly=True)
+    reason = fields.Selection(
+        EXTERNAL_REQUEST_REASON_SELECTION,
+        'Motivo', sort=False, required=True, readonly=True)
+    observations = fields.Text('Observaciones', readonly=True)
+    lines = fields.One2Many(
+        'gnuhealth.external.medication.audit.request.line',
+        'request', 'Medicamentos', readonly=True)
+    audit_lines = fields.One2Many(
+        'gnuhealth.medication.audit', 'external_request',
+        'Lineas de auditoria', readonly=True)
+
+    @classmethod
+    def create(cls, vlist):
+        vlist = [dict(values) for values in vlist]
+        for values in vlist:
+            values.setdefault('request_date', datetime.utcnow())
+            values.setdefault('created_by', Transaction().user)
+        return super().create(vlist)
+
+    @classmethod
+    def write(cls, *args):
+        raise UserError(
+            'Las solicitudes de medicamentos externos no se pueden modificar.')
+
+    @classmethod
+    def delete(cls, records):
+        raise UserError(
+            'Las solicitudes de medicamentos externos no se pueden eliminar.')
+
+
+class ExternalMedicationAuditRequestLine(ModelSQL, ModelView):
+    'Linea de solicitud de medicamentos externos'
+    __name__ = 'gnuhealth.external.medication.audit.request.line'
+
+    request = fields.Many2One(
+        'gnuhealth.external.medication.audit.request', 'Solicitud',
+        required=True, ondelete='CASCADE', readonly=True)
+    medicament = fields.Many2One(
+        'gnuhealth.medicament', 'Medicamento', required=True, readonly=True)
+    quantity = fields.Integer('Cantidad', required=True, readonly=True)
+
+
+class ExternalMedicationAuditRequestStart(ModelView):
+    'Registrar solicitud de medicamentos externos'
+    __name__ = 'gnuhealth.external.medication.audit.request.create.start'
+
+    patient = fields.Many2One(
+        'gnuhealth.patient', 'Paciente', required=True)
+    reason = fields.Selection(
+        EXTERNAL_REQUEST_REASON_SELECTION,
+        'Motivo', sort=False, required=True)
+    observations = fields.Text('Observaciones')
+    lines = fields.One2Many(
+        'gnuhealth.external.medication.audit.request.create.start.line',
+        'wizard', 'Medicamentos')
+
+
+class ExternalMedicationAuditRequestStartLine(ModelView):
+    'Linea temporal de solicitud de medicamentos externos'
+    __name__ = 'gnuhealth.external.medication.audit.request.create.start.line'
+
+    wizard = fields.Many2One(
+        'gnuhealth.external.medication.audit.request.create.start',
+        'Asistente')
+    medicament = fields.Many2One(
+        'gnuhealth.medicament', 'Medicamento', required=True)
+    quantity = fields.Integer('Cantidad', required=True)
+
+
+class ExternalMedicationAuditRequestResult(ModelView):
+    'Resultado de solicitud de medicamentos externos'
+    __name__ = 'gnuhealth.external.medication.audit.request.create.result'
+
+    request_date = fields.DateTime('Fecha Solicitud', readonly=True)
+    patient = fields.Many2One('gnuhealth.patient', 'Paciente', readonly=True)
+    reason = fields.Selection(
+        EXTERNAL_REQUEST_REASON_SELECTION,
+        'Motivo', sort=False, readonly=True)
+    request_id = fields.Integer('ID Solicitud', readonly=True)
+    generated_count = fields.Integer('Lineas Generadas', readonly=True)
+    message = fields.Text('Resultado', readonly=True)
 
 
 class CreatePackageStart(ModelView):
@@ -912,6 +1137,75 @@ class SelectPrescriptionWizard(Wizard):
         return 'reload'
 
 
+class ExternalMedicationAuditRequestWizard(Wizard):
+    'Registrar solicitud de medicamentos externos'
+    __name__ = 'gnuhealth.external.medication.audit.request.create'
+
+    start_state = 'start'
+    start = StateView(
+        'gnuhealth.external.medication.audit.request.create.start',
+        'z_001_prescription_audit.view_external_medication_audit_request_start',
+        [
+            Button('Cancelar', 'end', 'tryton-cancel'),
+            Button('Confirmar', 'create_request', 'tryton-ok', default=True),
+        ])
+    create_request = StateTransition()
+    result = StateView(
+        'gnuhealth.external.medication.audit.request.create.result',
+        'z_001_prescription_audit.'
+        'view_external_medication_audit_request_result',
+        [Button('Cerrar', 'end', 'tryton-ok', default=True)])
+
+    def __init__(self, session_id):
+        super().__init__(session_id)
+        self.result_data = {}
+
+    @classmethod
+    def _build_request_message(cls, request, created_lines):
+        return (
+            'La solicitud externa #%s del paciente "%s" se registro '
+            'correctamente con %s linea(s) para auditoria.'
+            % (request.id, request.patient.rec_name, len(created_lines)))
+
+    def transition_create_request(self):
+        pool = Pool()
+        MedicationAudit = pool.get('gnuhealth.medication.audit')
+        Request = pool.get('gnuhealth.external.medication.audit.request')
+
+        MedicationAudit._ensure_reception_role()
+        start_lines = list(self.start.lines or [])
+        if not start_lines:
+            raise UserError(
+                'Debe ingresar al menos una linea de medicamentos externos.')
+
+        request, = Request.create([{
+            'patient': self.start.patient.id,
+            'reason': self.start.reason,
+            'observations': self.start.observations,
+            'lines': [('create', [{
+                'medicament': line.medicament.id,
+                'quantity': line.quantity,
+            } for line in start_lines])],
+        }])
+        created_lines = MedicationAudit.create_external_request_lines(request)
+        self.result_data = {
+            'request_date': request.request_date,
+            'patient': request.patient.id,
+            'reason': request.reason,
+            'request_id': request.id,
+            'generated_count': len(created_lines),
+            'message': self.__class__._build_request_message(
+                request, created_lines),
+        }
+        return 'result'
+
+    def default_result(self, fields_names):
+        return dict(self.result_data)
+
+    def end(self):
+        return 'reload'
+
+
 class CreateTestUsersWizard(Wizard):
     'Crear usuarios de prueba'
     __name__ = 'gnuhealth.test.users.create'
@@ -1124,6 +1418,85 @@ class PrescriptionAuditExport(Wizard):
                 prescription_id,
                 patient_name,
                 medicament_name,
+                self._STATE_LABELS.get(
+                    record.audit_state, record.audit_state or ''),
+                audit_date,
+                auditor,
+                record.audit_notes or '',
+            ])
+
+        csv_bytes = output.getvalue().encode('utf-8-sig')
+        return {
+            'csv_file': csv_bytes,
+            'filename': 'auditoria_medicamentos.csv',
+        }
+
+    def default_result(self, fields_names):
+        MedicationAudit = Pool().get('gnuhealth.medication.audit')
+        active_ids = Transaction().context.get('active_ids') or []
+
+        if active_ids:
+            records = MedicationAudit.browse(active_ids)
+        else:
+            records = MedicationAudit.search([])
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            'ID Receta', 'Paciente', 'Medicamento', 'Cantidad Externa',
+            'Motivo Externo', 'Fecha Solicitud Externa',
+            'Estado Auditoria', 'Fecha Auditoria', 'Auditor', 'Notas',
+        ])
+
+        for record in records:
+            try:
+                prescription_id = (
+                    record.prescription.prescription_id
+                    if record.prescription else '')
+            except Exception:
+                prescription_id = ''
+            try:
+                patient_name = (
+                    record.patient.rec_name if record.patient else '')
+            except Exception:
+                patient_name = ''
+            try:
+                medicament_name = (
+                    record.medicament.rec_name if record.medicament else '')
+            except Exception:
+                medicament_name = ''
+            try:
+                external_quantity = record.external_quantity or ''
+            except Exception:
+                external_quantity = ''
+            try:
+                external_reason = record.external_reason_display or ''
+            except Exception:
+                external_reason = ''
+            try:
+                external_request_date = (
+                    record.external_request_date.strftime('%Y-%m-%d %H:%M:%S')
+                    if record.external_request_date else '')
+            except Exception:
+                external_request_date = ''
+            try:
+                audit_date = (
+                    record.audit_date.strftime('%Y-%m-%d %H:%M:%S')
+                    if record.audit_date else '')
+            except Exception:
+                audit_date = ''
+            try:
+                auditor = record.audit_user.name if record.audit_user else ''
+            except Exception:
+                auditor = ''
+
+            writer.writerow([
+                prescription_id,
+                patient_name,
+                medicament_name,
+                external_quantity,
+                external_reason,
+                external_request_date,
                 self._STATE_LABELS.get(
                     record.audit_state, record.audit_state or ''),
                 audit_date,

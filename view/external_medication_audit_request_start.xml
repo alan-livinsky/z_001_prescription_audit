@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<form>
+    <group col="4" colspan="4" id="group_external_request_start">
+        <label name="patient"/>
+        <field name="patient" colspan="3"/>
+        <label name="reason"/>
+        <field name="reason" colspan="3"/>
+    </group>
+    <label name="observations"/>
+    <field name="observations" colspan="4"/>
+    <field name="lines"
+           colspan="4"
+           mode="tree,form"
+           view_ids="z_001_prescription_audit.view_external_medication_audit_request_start_line_tree,z_001_prescription_audit.view_external_medication_audit_request_start_line_form"/>
+</form>

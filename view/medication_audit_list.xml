@@ -4,11 +4,15 @@
     <field name="prescription_issue_date" string="Fecha Emision Prescripcion"/>
     <field name="patient"/>
     <field name="medicament"/>
-    <field name="audit_state" string="Estado Auditoría"/>
+    <field name="external_quantity"/>
+    <field name="external_reason_display"/>
+    <field name="external_request_date"/>
+    <field name="external_request"/>
+    <field name="audit_state" string="Estado Auditoria"/>
     <field name="audit_date_display" string="Fecha y Hora Auditoria"/>
     <field name="package" string="Paquete"/>
     <field name="is_packaged" string="En Paquete" tree_invisible="1"/>
-    <button name="approve_line" string="Aceptar" />
-    <button name="reject_line" string="Rechazar" />
+    <button name="approve_line" string="Aceptar"/>
+    <button name="reject_line" string="Rechazar"/>
     <button name="reset_line" string="Restablecer"/>
 </tree>

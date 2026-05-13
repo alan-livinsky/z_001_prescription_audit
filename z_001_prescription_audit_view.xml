@@ -177,6 +177,24 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="perm_delete" eval="False"/>
         </record>
 
+        <record model="ir.model.access" id="access_patient_recepcion_readonly_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.patient')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_medicament_recepcion_readonly_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.medicament')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
         <record model="ir.model.access" id="access_load_result_recepcion_v3">
             <field name="model" search="[('model', '=', 'gnuhealth.medication.audit.load.result')]"/>
             <field name="group" ref="z_recepcion_recetas"/>
@@ -188,6 +206,87 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <record model="ir.model.access" id="access_loaded_prescription_audit_recepcion_v3">
             <field name="model" search="[('model', '=', 'gnuhealth.loaded.prescription.audit')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_recepcion_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_auditor_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request')]"/>
+            <field name="group" ref="z_auditor_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_overseer_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request')]"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_line_recepcion_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request.line')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_line_auditor_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request.line')]"/>
+            <field name="group" ref="z_auditor_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_line_overseer_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request.line')]"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_start_recepcion_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request.create.start')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_start_line_recepcion_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request.create.start.line')]"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="False"/>
+        </record>
+
+        <record model="ir.model.access" id="access_external_request_result_recepcion_v3">
+            <field name="model" search="[('model', '=', 'gnuhealth.external.medication.audit.request.create.result')]"/>
             <field name="group" ref="z_recepcion_recetas"/>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
@@ -408,6 +507,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
             <field name="group" ref="z_recepcion_recetas"/>
         </record>
 
+        <record model="ir.ui.menu-res.group" id="menu_prescription_audit_requests_group_access_auditor_v3">
+            <field name="menu" ref="menu_prescription_audit_requests_v3"/>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_prescription_audit_requests_group_access_overseer_v3">
+            <field name="menu" ref="menu_prescription_audit_requests_v3"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
+        </record>
+
         <record model="ir.ui.menu-res.group" id="menu_load_prescription_group_access_v3">
             <field name="menu" ref="menu_load_prescription_v3"/>
             <field name="group" ref="z_recepcion_recetas"/>
@@ -416,6 +525,113 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <record model="ir.ui.menu-res.group" id="menu_loaded_prescription_group_access_v3">
             <field name="menu" ref="menu_loaded_prescription_audit_v3"/>
             <field name="group" ref="z_recepcion_recetas"/>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_list">
+            <field name="model">gnuhealth.external.medication.audit.request</field>
+            <field name="type">tree</field>
+            <field name="name">external_medication_audit_request_list</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_form">
+            <field name="model">gnuhealth.external.medication.audit.request</field>
+            <field name="type">form</field>
+            <field name="name">external_medication_audit_request_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_line_tree">
+            <field name="model">gnuhealth.external.medication.audit.request.line</field>
+            <field name="type">tree</field>
+            <field name="name">external_medication_audit_request_line_list</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_line_form">
+            <field name="model">gnuhealth.external.medication.audit.request.line</field>
+            <field name="type">form</field>
+            <field name="name">external_medication_audit_request_line_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_start">
+            <field name="model">gnuhealth.external.medication.audit.request.create.start</field>
+            <field name="type">form</field>
+            <field name="name">external_medication_audit_request_start</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_start_line_tree">
+            <field name="model">gnuhealth.external.medication.audit.request.create.start.line</field>
+            <field name="type">tree</field>
+            <field name="name">external_medication_audit_request_start_line_list</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_start_line_form">
+            <field name="model">gnuhealth.external.medication.audit.request.create.start.line</field>
+            <field name="type">form</field>
+            <field name="name">external_medication_audit_request_start_line_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="view_external_medication_audit_request_result">
+            <field name="model">gnuhealth.external.medication.audit.request.create.result</field>
+            <field name="type">form</field>
+            <field name="name">external_medication_audit_request_result</field>
+        </record>
+
+        <record model="ir.action.wizard" id="act_external_medication_audit_request_wizard">
+            <field name="name">Registrar solicitud medicamentos externos</field>
+            <field name="wiz_name">gnuhealth.external.medication.audit.request.create</field>
+        </record>
+
+        <record model="ir.action-res.group" id="act_external_medication_audit_request_wizard_group_recepcion">
+            <field name="action" ref="act_external_medication_audit_request_wizard"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+        </record>
+
+        <record model="ir.action.act_window" id="act_external_medication_audit_request">
+            <field name="name">Solicitudes medicamentos externos</field>
+            <field name="res_model">gnuhealth.external.medication.audit.request</field>
+        </record>
+
+        <record model="ir.action.act_window.view" id="act_external_medication_audit_request_view_list">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="view_external_medication_audit_request_list"/>
+            <field name="act_window" ref="act_external_medication_audit_request"/>
+        </record>
+
+        <record model="ir.action.act_window.view" id="act_external_medication_audit_request_view_form">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="view_external_medication_audit_request_form"/>
+            <field name="act_window" ref="act_external_medication_audit_request"/>
+        </record>
+
+        <menuitem name="Registrar solicitud medicamentos externos"
+                  parent="menu_prescription_audit_requests_v3"
+                  id="menu_external_medication_audit_request_wizard"
+                  sequence="12"
+                  action="act_external_medication_audit_request_wizard"/>
+
+        <menuitem name="Solicitudes medicamentos externos"
+                  parent="menu_prescription_audit_requests_v3"
+                  id="menu_external_medication_audit_request"
+                  sequence="18"
+                  action="act_external_medication_audit_request"/>
+
+        <record model="ir.ui.menu-res.group" id="menu_external_medication_audit_request_wizard_group_access">
+            <field name="menu" ref="menu_external_medication_audit_request_wizard"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_external_medication_audit_request_group_access_recepcion">
+            <field name="menu" ref="menu_external_medication_audit_request"/>
+            <field name="group" ref="z_recepcion_recetas"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_external_medication_audit_request_group_access_auditor">
+            <field name="menu" ref="menu_external_medication_audit_request"/>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+
+        <record model="ir.ui.menu-res.group" id="menu_external_medication_audit_request_group_access_overseer">
+            <field name="menu" ref="menu_external_medication_audit_request"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
         </record>
 
         <!-- ======================================================= -->

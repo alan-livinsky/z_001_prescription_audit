@@ -2,6 +2,6 @@
 <tree>
     <field name="prescription_code" string="Codigo de Receta"/>
     <field name="prescription_issue_date" string="Fecha Emision"/>
-    <field name="audit_load_date" string="Fecha Carga a Auditoria"/>
+    <field name="audit_load_date_display" string="Fecha Carga a Auditoria"/>
     <field name="patient" string="Paciente"/>
 </tree>
