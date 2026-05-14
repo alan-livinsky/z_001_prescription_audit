@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tryton>
+    <data>
+        <record model="ir.action.report" id="report_medication_purchase_package">
+            <field name="name">Solicitud de compra PDF</field>
+            <field name="model">gnuhealth.medication.purchase.package</field>
+            <field name="report_name">z_001_prescription_audit.medication_purchase_package</field>
+            <field name="report">z_001_prescription_audit/report/medication_purchase_package.fodt</field>
+            <field name="extension">pdf</field>
+            <field name="single" eval="True"/>
+        </record>
+
+        <record model="ir.action.keyword" id="keyword_report_medication_purchase_package">
+            <field name="keyword">form_print</field>
+            <field name="model">gnuhealth.medication.purchase.package,-1</field>
+            <field name="action" ref="report_medication_purchase_package"/>
+        </record>
+
+        <record model="ir.action-res.group" id="report_medication_purchase_package_group_auditor">
+            <field name="action" ref="report_medication_purchase_package"/>
+            <field name="group" ref="z_auditor_recetas"/>
+        </record>
+
+        <record model="ir.action-res.group" id="report_medication_purchase_package_group_overseer">
+            <field name="action" ref="report_medication_purchase_package"/>
+            <field name="group" ref="z_supervisosr_auditor_recetas"/>
+        </record>
+    </data>
+</tryton>

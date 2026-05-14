@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0"
+    office:version="1.3"
+    office:mimetype="application/vnd.oasis.opendocument.text">
+ <office:font-face-decls>
+  <style:font-face style:name="Liberation Sans" svg:font-family="Liberation Sans"/>
+ </office:font-face-decls>
+ <office:styles>
+  <style:default-style style:family="paragraph">
+   <style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.04in" fo:line-height="115%"/>
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="10pt"/>
+  </style:default-style>
+  <style:style style:name="Title" style:family="paragraph">
+   <style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.12in"/>
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="14pt" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Subtitle" style:family="paragraph">
+   <style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.14in"/>
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="10pt"/>
+  </style:style>
+  <style:style style:name="Text" style:family="paragraph">
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="10pt"/>
+  </style:style>
+  <style:style style:name="Bold" style:family="paragraph">
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="10pt" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Small" style:family="paragraph">
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="9pt"/>
+  </style:style>
+  <style:style style:name="Right" style:family="paragraph">
+   <style:paragraph-properties fo:text-align="end"/>
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="10pt"/>
+  </style:style>
+  <style:style style:name="CenterBold" style:family="paragraph">
+   <style:paragraph-properties fo:text-align="center"/>
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="10pt" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Command" style:family="paragraph">
+   <style:text-properties style:font-name="Liberation Sans" fo:font-size="1pt" fo:color="#ffffff"/>
+  </style:style>
+  <style:style style:name="LabelSpan" style:family="text">
+   <style:text-properties fo:font-weight="bold"/>
+  </style:style>
+ </office:styles>
+ <office:automatic-styles>
+  <style:page-layout style:name="PageLayout">
+   <style:page-layout-properties fo:page-width="8.27in" fo:page-height="11.69in" style:print-orientation="portrait" fo:margin-top="0.55in" fo:margin-bottom="0.55in" fo:margin-left="0.5in" fo:margin-right="0.5in"/>
+  </style:page-layout>
+  <style:style style:name="HeaderTable" style:family="table">
+   <style:table-properties table:align="margins" style:width="100%"/>
+  </style:style>
+  <style:style style:name="LineTable" style:family="table">
+   <style:table-properties table:align="margins" style:width="100%"/>
+  </style:style>
+  <style:style style:name="ColA" style:family="table-column">
+   <style:table-column-properties style:column-width="1.15in"/>
+  </style:style>
+  <style:style style:name="ColB" style:family="table-column">
+   <style:table-column-properties style:column-width="1.45in"/>
+  </style:style>
+  <style:style style:name="ColC" style:family="table-column">
+   <style:table-column-properties style:column-width="1.75in"/>
+  </style:style>
+  <style:style style:name="ColD" style:family="table-column">
+   <style:table-column-properties style:column-width="0.7in"/>
+  </style:style>
+  <style:style style:name="ColE" style:family="table-column">
+   <style:table-column-properties style:column-width="1.25in"/>
+  </style:style>
+  <style:style style:name="ColF" style:family="table-column">
+   <style:table-column-properties style:column-width="1.2in"/>
+  </style:style>
+  <style:style style:name="Cell" style:family="table-cell">
+   <style:table-cell-properties fo:padding="0.03in" fo:border="0.75pt solid #bdbdbd" style:vertical-align="top"/>
+  </style:style>
+  <style:style style:name="HeaderCell" style:family="table-cell">
+   <style:table-cell-properties fo:padding="0.03in" fo:border="0.75pt solid #7a7a7a" fo:background-color="#efefef" style:vertical-align="middle"/>
+  </style:style>
+ </office:automatic-styles>
+ <office:master-styles>
+  <style:master-page style:name="Standard" style:page-layout-name="PageLayout"/>
+ </office:master-styles>
+ <office:body>
+  <office:text>
+   <text:p text:style-name="Title">Solicitud de compra de medicamentos</text:p>
+   <text:p text:style-name="Subtitle">Paquete generado desde auditoria de recetas</text:p>
+
+   <table:table table:name="Header" table:style-name="HeaderTable">
+    <table:table-column table:style-name="ColC"/>
+    <table:table-column table:style-name="ColC"/>
+    <table:table-column table:style-name="ColC"/>
+    <table:table-row>
+     <table:table-cell table:style-name="Cell" office:value-type="string">
+      <text:p text:style-name="Text"><text:span text:style-name="LabelSpan">Paquete:</text:span> <text:placeholder text:placeholder-type="text">&lt;summary.name&gt;</text:placeholder></text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string">
+      <text:p text:style-name="Text"><text:span text:style-name="LabelSpan">Fecha:</text:span> <text:placeholder text:placeholder-type="text">&lt;summary.date_text&gt;</text:placeholder></text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string">
+      <text:p text:style-name="Text"><text:span text:style-name="LabelSpan">Creado por:</text:span> <text:placeholder text:placeholder-type="text">&lt;summary.created_by&gt;</text:placeholder></text:p>
+     </table:table-cell>
+    </table:table-row>
+    <table:table-row>
+     <table:table-cell table:style-name="Cell" office:value-type="string">
+      <text:p text:style-name="Text"><text:span text:style-name="LabelSpan">Lineas:</text:span> <text:placeholder text:placeholder-type="text">&lt;summary.line_count&gt;</text:placeholder></text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string">
+      <text:p text:style-name="Text"><text:span text:style-name="LabelSpan">Pacientes:</text:span> <text:placeholder text:placeholder-type="text">&lt;summary.patient_count&gt;</text:placeholder></text:p>
+     </table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string">
+      <text:p text:style-name="Text"><text:span text:style-name="LabelSpan">Solicitudes externas:</text:span> <text:placeholder text:placeholder-type="text">&lt;summary.external_line_count&gt;</text:placeholder></text:p>
+     </table:table-cell>
+    </table:table-row>
+   </table:table>
+
+   <text:p text:style-name="Bold">Observaciones</text:p>
+   <text:p text:style-name="Text"><text:placeholder text:placeholder-type="text">&lt;summary.notes or ''&gt;</text:placeholder></text:p>
+
+   <text:p text:style-name="Bold">Detalle de lineas</text:p>
+   <table:table table:name="Lines" table:style-name="LineTable">
+    <table:table-column table:style-name="ColA"/>
+    <table:table-column table:style-name="ColB"/>
+    <table:table-column table:style-name="ColC"/>
+    <table:table-column table:style-name="ColD"/>
+    <table:table-column table:style-name="ColE"/>
+    <table:table-column table:style-name="ColF"/>
+    <table:table-row>
+     <table:table-cell table:style-name="HeaderCell" office:value-type="string"><text:p text:style-name="CenterBold">Referencia</text:p></table:table-cell>
+     <table:table-cell table:style-name="HeaderCell" office:value-type="string"><text:p text:style-name="CenterBold">Paciente</text:p></table:table-cell>
+     <table:table-cell table:style-name="HeaderCell" office:value-type="string"><text:p text:style-name="CenterBold">Medicamento</text:p></table:table-cell>
+     <table:table-cell table:style-name="HeaderCell" office:value-type="string"><text:p text:style-name="CenterBold">Cant.</text:p></table:table-cell>
+     <table:table-cell table:style-name="HeaderCell" office:value-type="string"><text:p text:style-name="CenterBold">Origen</text:p></table:table-cell>
+     <table:table-cell table:style-name="HeaderCell" office:value-type="string"><text:p text:style-name="CenterBold">Fecha auditoria</text:p></table:table-cell>
+    </table:table-row>
+    <table:table-row>
+     <table:table-cell table:style-name="Cell" table:number-columns-spanned="6" office:value-type="string">
+      <text:p text:style-name="Command"><text:placeholder text:placeholder-type="text">&lt;for each=&quot;line in report_lines&quot;&gt;</text:placeholder></text:p>
+     </table:table-cell>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+    </table:table-row>
+    <table:table-row>
+     <table:table-cell table:style-name="Cell" office:value-type="string"><text:p text:style-name="Small"><text:placeholder text:placeholder-type="text">&lt;line.reference&gt;</text:placeholder></text:p></table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string"><text:p text:style-name="Small"><text:placeholder text:placeholder-type="text">&lt;line.patient&gt;</text:placeholder></text:p></table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string"><text:p text:style-name="Small"><text:placeholder text:placeholder-type="text">&lt;line.medicament&gt;</text:placeholder></text:p></table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string"><text:p text:style-name="Right"><text:placeholder text:placeholder-type="text">&lt;line.quantity&gt;</text:placeholder></text:p></table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string"><text:p text:style-name="Small"><text:placeholder text:placeholder-type="text">&lt;line.origin&gt;</text:placeholder></text:p></table:table-cell>
+     <table:table-cell table:style-name="Cell" office:value-type="string"><text:p text:style-name="Small"><text:placeholder text:placeholder-type="text">&lt;line.audit_date&gt;</text:placeholder></text:p></table:table-cell>
+    </table:table-row>
+    <table:table-row>
+     <table:table-cell table:style-name="Cell" table:number-columns-spanned="6" office:value-type="string">
+      <text:p text:style-name="Small"><text:span text:style-name="LabelSpan">Auditor:</text:span> <text:placeholder text:placeholder-type="text">&lt;line.auditor&gt;</text:placeholder> <text:span text:style-name="LabelSpan">Notas:</text:span> <text:placeholder text:placeholder-type="text">&lt;line.notes&gt;</text:placeholder></text:p>
+     </table:table-cell>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+    </table:table-row>
+    <table:table-row>
+     <table:table-cell table:style-name="Cell" table:number-columns-spanned="6" office:value-type="string">
+      <text:p text:style-name="Command"><text:placeholder text:placeholder-type="text">&lt;/for&gt;</text:placeholder></text:p>
+     </table:table-cell>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+     <table:covered-table-cell/>
+    </table:table-row>
+   </table:table>
+
+   <text:p text:style-name="Small">Emitido: <text:placeholder text:placeholder-type="text">&lt;summary.printed_at&gt;</text:placeholder></text:p>
+   <text:p text:style-name="Small">Usuario: <text:placeholder text:placeholder-type="text">&lt;summary.user&gt;</text:placeholder></text:p>
+  </office:text>
+ </office:body>
+</office:document>

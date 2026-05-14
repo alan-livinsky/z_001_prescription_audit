@@ -12,7 +12,8 @@ from trytond.model import fields, ModelSQL, ModelView, Unique
 from trytond.pool import Pool
 from trytond.pyson import Bool, Eval
 from trytond.transaction import Transaction
-from trytond.wizard import Button, StateTransition, StateView, Wizard
+from trytond.wizard import (
+    Button, StateReport, StateTransition, StateView, Wizard)
 
 __all__ = [
     'MedicationPurchasePackage',
@@ -1084,9 +1085,10 @@ class CreatePackageWizard(Wizard):
         'z_001_prescription_audit.view_create_package_start',
         [
             Button('Cancelar', 'end', 'tryton-cancel'),
-            Button('Confirmar', 'create_package', 'tryton-ok', default=True),
+            Button('Confirmar', 'print_', 'tryton-ok', default=True),
         ])
-    create_package = StateTransition()
+    print_ = StateReport(
+        'z_001_prescription_audit.medication_purchase_package')
 
     @classmethod
     def _get_target_summary(cls, start):
@@ -1099,7 +1101,7 @@ class CreatePackageWizard(Wizard):
             date_from=start.audit_date_from,
             date_to=start.audit_date_to)
 
-    def transition_create_package(self):
+    def _create_package(self):
         pool = Pool()
         MedicationAudit = pool.get('gnuhealth.medication.audit')
         MedicationPurchasePackage = pool.get(
@@ -1133,10 +1135,19 @@ class CreatePackageWizard(Wizard):
         if MedicalPurchaseAudit is not None:
             MedicalPurchaseAudit.create_from_package(
                 MedicationPurchasePackage(package.id))
-        return 'end'
+        return MedicationPurchasePackage(package.id)
 
-    def end(self):
-        return 'reload'
+    def do_print_(self, action):
+        package = self._create_package()
+        data = {
+            'id': package.id,
+            'ids': [package.id],
+            'model': 'gnuhealth.medication.purchase.package',
+        }
+        return action, data
+
+    def transition_print_(self):
+        return 'end'
 
 
 class SelectPrescriptionStart(ModelView):

@@ -3,6 +3,7 @@
 
 from trytond.pool import Pool
 from . import z_001_prescription_audit
+from . import report
 
 
 def register():
@@ -29,3 +30,6 @@ def register():
         z_001_prescription_audit.CreateTestUsersWizard,
         z_001_prescription_audit.PrescriptionAuditExport,
         module='z_001_prescription_audit', type_='wizard')
+    Pool.register(
+        report.package.MedicationPurchasePackageReport,
+        module='z_001_prescription_audit', type_='report')
